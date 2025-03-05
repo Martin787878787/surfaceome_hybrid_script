@@ -100,7 +100,7 @@ ppi_biogrid <- function(query_list, mode, set) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     coord_cartesian(clip = "off")
   #  --------------------------------------------------------------------------------------------------------
-  # boxplot node degrees  
+  # boxplot evidence count
   combined_df2 <- bind_rows(
     biogrid_phys_query_subset  %>% dplyr::select(interactor_a, evidence_count_global)       %>% mutate(source = "query_subset_global") %>% rename("evidence_count" = "evidence_count_global")      ,
     biogrid_phys_query_subset  %>% dplyr::select(interactor_a, evidence_count_query_subset) %>% mutate(source = "query_subset_intern") %>% rename("evidence_count" = "evidence_count_query_subset"),

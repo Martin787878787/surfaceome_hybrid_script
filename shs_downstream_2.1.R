@@ -41,9 +41,9 @@ library(biomaRt)
 set.seed(1234)
 #
 ## load R functions
-sapply(list.files(path = "/Users/mgesell/Desktop/currentR/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
+sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
 #
-#
+
 ## script parameters
 test_parameter    = ""
 poi_list          = "LUX_targets.CPIs" # select one colnames(poi):  
@@ -51,11 +51,13 @@ string_network    = "uniprot_swissprot"
 #
 # directories
 # directory_input_CSC   = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v16.2_CSC_deam_7aa__Jurkat-Tact_timecourse/_output2025-01-30_1-2_ludo_adjp_0.7string_shs2.21")
-directory_input_CSC_31       = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_shs2.22")
-directory_input_CSC_31_meta   = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_meta_shs2.22")
+directory_input_CSC_31           = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_shs2.22")
+directory_input_CSC_31_meta      = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_meta_shs2.22")
 # directory_input_LUX   = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.21")
-directory_input_LUX_31     = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_uniqueImpute_shs2.22")
-directory_input_LUX_31_meta = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_meta_uniqueImpute_shs2.22")
+directory_input_LUX_31           = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_uniqueImpute_shs2.22")
+directory_input_LUX_31_meta      = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_meta_uniqueImpute_shs2.22")
+directory_input_LUX_31_full_meta = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_uniqueImpute_full_meta_shs2.22")
+
 directory_input_LUX_24     = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v24_FP20_HoxHoxox_semi_6aa__panT_LUX_TCR-CD4-CD8/_output_1-2_ludo_adjp_0.7string_shs2.22")
 
 directory_root        = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_shs_ds_2.1")
@@ -64,17 +66,18 @@ if (!dir.exists( directory_output)) {  dir.create(directory_output)  }
 setwd(paste(directory_root))   
 #
 # condition_levels_CSC      = c("NAct", "Act_0", "Act_0_5h", "Act_1h", "Act_2h", "Act_4h", "Act_24h", "Act_72h") # experiment specific condition & order desired in plots (& dataframes)
-condition_levels_LUX_24           = c("TCR", "CD4", "CD8") # experiment specific condition & order desired in plots (& dataframes)
-condition_levels_LUX_24_full     = c("TCR", "CD4", "CD8", "Iso") # experiment specific condition & order desired in plots (& dataframes)
+condition_levels_LUX_24         = c("TCR", "CD4", "CD8") # experiment specific condition & order desired in plots (& dataframes)
+condition_levels_LUX_24_all     = c("TCR", "CD4", "CD8", "Iso") # experiment specific condition & order desired in plots (& dataframes)
 #
-condition_levels_CSC_31           = c("nCD4", "nnCD4", "nCD8", "nnCD8") # experiment specific condition & order desired in plots (& dataframes)
-condition_levels_LUX_31           = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD8_TCR") # experiment specific condition & order desired in plots (& dataframes)
-condition_levels_LUX_31_full      = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD8_TCR","nCD4_Iso", "nnCD4_Iso", "nCD8_Iso", "nnCD8_Iso") # experiment specific condition & order desired in plots (& dataframes)
+condition_levels_CSC_31          = c("nCD4", "nnCD4", "nCD8", "nnCD8") # experiment specific condition & order desired in plots (& dataframes)
+condition_levels_LUX_31          = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD8_TCR") # experiment specific condition & order desired in plots (& dataframes)
+condition_levels_LUX_31_all      = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD8_TCR","nCD4_Iso", "nnCD4_Iso", "nCD8_Iso", "nnCD8_Iso") # experiment specific condition & order desired in plots (& dataframes)
 #
 condition_levels_CSC_31_meta      = c("nCD4", "nnCD4", "nCD8", "nnCD8", "CD4meta", "CD8meta", "nMeta", "nnMeta") # experiment specific condition & order desired in plots (& dataframes)
 condition_levels_LUX_31_meta      = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD8_TCR", "CD4meta_TCR", "CD8meta_TCR", "nMeta_TCR", "nnMeta_TCR") # experiment specific condition & order desired in plots (& dataframes)
-condition_levels_LUX_31_full_meta = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD8_TCR","nCD4_Iso", "nnCD4_Iso", "nCD8_Iso", "nnCD8_Iso", "CD4meta_TCR", "CD8meta_TCR", "nMeta_TCR", "nnMeta_TCR", "CD4meta_Iso", "CD8meta_Iso", "nMeta_Iso", "nnMeta_Iso") # experiment specific condition & order desired in plots (& dataframes)
+condition_levels_LUX_31_meta_all  = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD8_TCR","nCD4_Iso", "nnCD4_Iso", "nCD8_Iso", "nnCD8_Iso", "CD4meta_TCR", "CD8meta_TCR", "nMeta_TCR", "nnMeta_TCR", "CD4meta_Iso", "CD8meta_Iso", "nMeta_Iso", "nnMeta_Iso") # experiment specific condition & order desired in plots (& dataframes)
 #
+condition_levels_LUX_31_meta_full  = c("metaTCR", "metaIso") # experiment specific condition & order desired in plots (& dataframes)
 
 
 ## human string - parameters ===================================================================================================================================================================================================================================================================
@@ -117,26 +120,66 @@ proteome <- load_uniprot_and_annotate(proteome = read_protti("/Users/mgesell/PhD
 ##############################################################################################################################################################################################################################################################################################
 ##############################################################################################################################################################################################################################################################################################
 ## load data 
-# proteins
-data_CSC_prot_v31      <-       load_protein_data(directory_input = directory_input_CSC_31, condition_levels = condition_levels_CSC_31)
-data_CSC_prot_v31_meta <- rbind(load_protein_data(directory_input = directory_input_CSC_31     , condition_levels = condition_levels_CSC_31),
-                                load_protein_data(directory_input = directory_input_CSC_31_meta, condition_levels = condition_levels_CSC_31_meta) ) 
-data_LUX_prot_v31      <-       load_protein_data(directory_input = directory_input_LUX_31, condition_levels = condition_levels_LUX_31)
-data_LUX_prot_v31_meta <- rbind(load_protein_data(directory_input = directory_input_LUX_31     , condition_levels = condition_levels_LUX_31),
-                                load_protein_data(directory_input = directory_input_LUX_31_meta, condition_levels = condition_levels_LUX_31_meta)  )
+# protein level data
+data_CSC_prot_v31         <-   load_protein_data(directory_input = directory_input_CSC_31                 , condition_levels = condition_levels_CSC_31)
+data_CSC_prot_v31_meta    <-   rbind(data_CSC_prot_v31,
+                                     load_protein_data(directory_input = directory_input_CSC_31_meta      , condition_levels = condition_levels_CSC_31_meta) ) 
+data_LUX_prot_v31          <-  load_protein_data(directory_input = directory_input_LUX_31                 , condition_levels = condition_levels_LUX_31)
+data_LUX_prot_v31_meta     <-  rbind(data_LUX_prot_v31,
+                                     load_protein_data(directory_input = directory_input_LUX_31_meta      , condition_levels = condition_levels_LUX_31_meta)  )
+data_LUX_prot_v31_meta_full <- rbind(data_LUX_prot_v31_meta,
+                                     load_protein_data(directory_input = directory_input_LUX_31_full_meta , condition_levels = condition_levels_LUX_31_meta_full))
 
-data_LUX_prot_v24   <- load_protein_data(directory_input = directory_input_LUX_24, condition_levels = condition_levels_LUX_24_full)
+data_LUX_prot_v24   <- load_protein_data(directory_input = directory_input_LUX_24, condition_levels = condition_levels_LUX_24_all)
 
-# diff abundance
-data_CSC_prot_diff_v31      <- load_protein_data_diff(directory_input = directory_input_CSC_31)
-data_CSC_prot_diff_v31_meta <- rbind(load_protein_data_diff(directory_input = directory_input_CSC_31),
-                                     load_protein_data_diff(directory_input = directory_input_CSC_31_meta))
+# diff abundance data
+data_CSC_prot_diff_v31           <- load_protein_data_diff(directory_input       = directory_input_CSC_31           )
+data_CSC_prot_diff_v31_meta      <- rbind(data_CSC_prot_diff_v31,
+                                          load_protein_data_diff(directory_input = directory_input_CSC_31_meta      )  )
+data_LUX_prot_diff_v31           <- load_protein_data_diff(directory_input       = directory_input_LUX_31           )
+data_LUX_prot_diff_v31_meta      <- rbind(data_LUX_prot_diff_v31,
+                                          load_protein_data_diff(directory_input = directory_input_LUX_31_meta      )  )
+data_LUX_prot_diff_v31_meta_full <- rbind(data_LUX_prot_diff_v31_meta,
+                                          load_protein_data_diff(directory_input = directory_input_LUX_31_full_meta )  )
 
-data_LUX_prot_diff_v31      <- load_protein_data_diff(directory_input = directory_input_LUX_31)
-data_LUX_prot_diff_v31_meta <- rbind(load_protein_data_diff(directory_input = directory_input_LUX_31),
-                                     load_protein_data_diff(directory_input = directory_input_LUX_31_meta))
+data_LUX_prot_diff_v24            <- load_protein_data_diff(directory_input       = directory_input_LUX_24           )
+data_LUX_prot_diff_v24_v31_total  <- rbind(data_LUX_prot_diff_v24,
+                                           data_LUX_prot_diff_v31_meta_full)
 
-data_LUX_prot_diff_v24_meta <- load_protein_data_diff(directory_input = directory_input_LUX_24)
+
+################################################################################################################################################
+# set plot theme for script (from Amanda K)
+  # my plot theme to fit most journal figure requirements:
+  # black axis ticks and borders;   
+  # 5-7pt or 6-8pt text for a 2-panel figure    
+  # Line width 0.5-1.5 pt
+  # Colour blind friendly colour scheme (would recommend defining colours in source functions and use throughout) e.g. no red and green used together
+  # Gray fills between 10-80%
+  # Figure resolution at least 300 dpi ( I like to export in pdf not svg or tiff if using ggsave so figure is small and vectorized)
+plot_theme <- function() {
+  theme_classic() %+replace%
+    theme(
+      axis.text    = element_text(size = 16, face = "plain"),
+      axis.text.x  = element_text(),
+      axis.title   = element_text(size = 16, face = "bold"),
+      axis.title.x = element_text(),
+      title        = element_text(size = 16, face = "plain"),
+      strip.text.x = element_text(size = 16),
+      strip.text.y = element_text(size = 16),
+      legend.text  = element_text(size = 16),
+      legend.title = element_text(size = 16, face = "bold"),
+      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+      plot.margin  = unit(c(t = 1, r = 1, b = 0.1, l = 1), "cm")
+    )
+}
+theme_set(plot_theme()) # all plots generated from this script thosuld have same theme now 
+
+sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
+###################################################################################################################################################################################################################################################################################################
+###################################################################################################################################################################################################################################################################################################
+################################################## End of Input Section ###########################################################################################################################################################################################################################
+###################################################################################################################################################################################################################################################################################################
+###################################################################################################################################################################################################################################################################################################
 
 
 # v31 specific - check abundance vs LUX sig_up and LUX TCR core ###########################################################################################################################################################################
@@ -153,7 +196,6 @@ data_CSC_prot_LUX_filtered <- data_CSC_prot_LUX_filtered  %>%
 ggplot(data_CSC_prot_LUX_filtered, aes(x = LUX_signal_plot, y = log2_median, fill = LUX_signal_plot)) +
   geom_boxplot(color = "black") +
   scale_fill_manual(values = c("sig_up" = "#0570b0", "non_sig" = "grey", "sig_up_core" = "#31a354")) +
-  theme_minimal() +
   labs(
     title = "v31 CSC abundances grouped by v31 LUX enrichment categories",
     x = "LUX Signal Plot",
@@ -162,32 +204,30 @@ ggplot(data_CSC_prot_LUX_filtered, aes(x = LUX_signal_plot, y = log2_median, fil
   theme(legend.position = "none")
 ##########################################################################################################################################################################################################################################
 
-# heatmap data_prot
-
-# heatmap data_prot_diff log2
-
-# heatmap data_prot_diff adj_pvalue
-
-
-
 
 
 ### GO analysis #####################################################################################################################################################################################
 ## LUX -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-sapply(list.files(path = "/Users/mgesell/Desktop/currentR/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
 # ensembl id translation
 library(biomaRt)
-gost_overall_LUX <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta                                                        %>% pull(entry)), set = "overall" , max_term_size = 100)
-gost_nCD4        <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso")       %>% pull(entry)), set = "nCD4"    , max_term_size = 100)
-gost_nnCD4       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")     %>% pull(entry)), set = "nnCD4"   , max_term_size = 100)
-gost_nCD8        <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso")       %>% pull(entry)), set = "nCD8"    , max_term_size = 100)
-gost_nnCD8       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")     %>% pull(entry)), set = "nnCD8"   , max_term_size = 100)
-gost_CD4         <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), set = "CD4meta" , max_term_size = 100)
-gost_CD8         <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), set = "CD8meta" , max_term_size = 100)
-gost_nMeta       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso")     %>% pull(entry)), set = "nMeta"   , max_term_size = 100)
-gost_nnMeta      <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso")   %>% pull(entry)), set = "nnMeta"  , max_term_size = 100)
+gost_overall_LUX <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full                                                        %>% pull(entry)), set = "overall" , max_term_size = 100)
+gost_nCD4        <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso")       %>% pull(entry)), set = "nCD4"    , max_term_size = 100)
+gost_nnCD4       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")     %>% pull(entry)), set = "nnCD4"   , max_term_size = 100)
+gost_nCD8        <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso")       %>% pull(entry)), set = "nCD8"    , max_term_size = 100)
+gost_nnCD8       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")     %>% pull(entry)), set = "nnCD8"   , max_term_size = 100)
+gost_CD4meta       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), set = "CD4meta" , max_term_size = 100)
+gost_CD8meta       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), set = "CD8meta" , max_term_size = 100)
+gost_nMeta         <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso")     %>% pull(entry)), set = "nMeta"   , max_term_size = 100)
+gost_nnMeta        <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso")   %>% pull(entry)), set = "nnMeta"  , max_term_size = 100)
+gost_TCRmeta       <- go_gost(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)), set = "metaTCR" , max_term_size = 100)
+gost_panT_TCRLUX      <- go_gost(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)), set = "panT_TCRLUX" , max_term_size = 100)
+gost_panT_CD4LUX      <- go_gost(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)), set = "panT_CD4LUX" , max_term_size = 100)
+gost_panT_CD8LUX      <- go_gost(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)), set = "panT_CD8LUX" , max_term_size = 100)
+
 # combine GO sets to one long df
-gost_LUX <- rbind(gost_overall_LUX, gost_nCD4, gost_nnCD4, gost_nCD8, gost_nnCD8, gost_CD4, gost_CD8, gost_nMeta,gost_nnMeta) %>%
+gost_LUX <- rbind(gost_overall_LUX, gost_nCD4, gost_nnCD4, gost_nCD8, gost_nnCD8, 
+                  gost_CD4meta, gost_CD8meta, gost_nMeta, gost_nnMeta, gost_TCRmeta, 
+                  gost_panT_TCRLUX, gost_panT_CD4LUX, gost_panT_CD8LUX) %>%
   group_by(term_name) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup()
@@ -196,22 +236,28 @@ plot_dual_distance_bubble(data = gost_LUX,
                           group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = 0.05,  # data filters
                           grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
+                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") + # plot parameters
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 plot_dual_distance_bubble(data = gost_LUX,  
-                          group_filter = c("overall"),  # data subset   set to NULL if full df is to be plottet
+                          group_filter = c("overall", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = 0.05,  # data filters
                           grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
+                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
 plot_dual_distance_bubble(data = gost_LUX,  
                           group_filter = c("nCD4", "nnCD4", "nCD8", "nnCD8"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = 0.05,  # data filters
                           grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
+                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
 plot_dual_distance_bubble(data = gost_LUX,  
-                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta"),  # data subset   set to NULL if full df is to be plottet
+                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = 0.05,  # data filters
                           grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
+                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
+plot_dual_distance_bubble(data = gost_LUX,  
+                          group_filter = c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta",  "panT_CD8LUX"),  # data subset   set to NULL if full df is to be plottet
+                          min_recall = 0.5, min_p_value = 0.05,  # data filters
+                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
+                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
 
 ## CSC  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 gost_overall_CSC        <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta                                                 %>% pull(entry)), set = "overall"            , max_term_size = 100)
@@ -219,8 +265,8 @@ gost_nCD4_vs_nCD8       <- go_gost(query_list = unique(data_CSC_prot_diff_v31_me
 gost_nCD4_vs_nnCD4      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4" )      %>% pull(entry)), set = "nCD4_vs_nnCD4"      , max_term_size = 100)
 gost_nnCD4_vs_nnCD8     <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8")      %>% pull(entry)), set = "nnCD4_vs_nnCD8"     , max_term_size = 100)
 gost_nCD8_vs_nnCD8      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8" )      %>% pull(entry)), set = "nCD8_vs_nnCD8"      , max_term_size = 100)
-gost_nMeta_vs_nnMeta    <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta" )    %>% pull(entry)), set = "nMeta_vs_nnMeta"    , max_term_size = 100)
-gost_CD4meta_vs_CD8meta <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta" ) %>% pull(entry)), set = "CD4meta_vs_CD8meta" , max_term_size = 100)
+gost_nMeta_vs_nnMeta      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta" )    %>% pull(entry)), set = "nMeta_vs_nnMeta"    , max_term_size = 100)
+gost_CD4meta_vs_CD8meta   <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta" ) %>% pull(entry)), set = "CD4meta_vs_CD8meta" , max_term_size = 100)
 # combine GO sets to one long df
 gost_CSC <- rbind(gost_overall_CSC, gost_nCD4_vs_nCD8, gost_nCD4_vs_nnCD4, gost_nnCD4_vs_nnCD8, gost_nCD8_vs_nnCD8, gost_nMeta_vs_nnMeta, gost_CD4meta_vs_CD8meta) %>%
   group_by(term_name) %>%
@@ -231,9 +277,10 @@ plot_dual_distance_bubble(data = gost_CSC,
                           group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = 0.05,  # data filters
                           grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
+                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") + # plot parameters
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 plot_dual_distance_bubble(data = gost_CSC,  
-                          group_filter = "overall", # data subset   set to NULL if full df is to be plottet
+                          group_filter = c("overall"), # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = 0.05,  # data filters
                           grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
                           x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
@@ -251,18 +298,24 @@ plot_dual_distance_bubble(data = gost_CSC,
 ## PPIs #########################################################################################################################################################################
 tcr_chains <- poi_reference %>% filter(!tcr_chains_manual_entry == "") %>% pull(tcr_chains_manual_entry)
 # biogrid PPIs -----------------------------------------------------------------------------------
-ppi_bg_overall_LUX <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% pull(entry))                                                     , mode = "physical", set = "overall")
-ppi_bg_nCD4        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD4"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nnCD4       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD4"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nnCD8       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD8"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nCD8        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD8"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nnMeta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nMeta     <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_CD4meta   <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_CD8meta   <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_overall_LUX <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% pull(entry))                                                     , mode = "physical", set = "overall")
+ppi_bg_nCD4        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD4"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nnCD4       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD4"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nnCD8       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD8"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nCD8        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD8"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nnMeta     <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nMeta      <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_CD4meta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_CD8meta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_TCRmeta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)), mode = "physical", set = "metaTCR")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_panT_TCRLUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_TCRLUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_panT_CD4LUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD4LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_panT_CD8LUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD8LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
 
 # combine bg ppi sets to one long df
-ppi_bg <- rbind(ppi_bg_overall_LUX, ppi_bg_nCD4, ppi_bg_nnCD4, ppi_bg_nnCD8, ppi_bg_nCD8, ppi_bg_nnMeta, ppi_bg_nMeta, ppi_bg_CD4meta, ppi_bg_CD8meta) %>%
+ppi_bg <- rbind(ppi_bg_overall_LUX, ppi_bg_nCD4, ppi_bg_nnCD4, ppi_bg_nnCD8, ppi_bg_nCD8, 
+                ppi_bg_nnMeta, ppi_bg_nMeta, ppi_bg_CD4meta, ppi_bg_CD8meta, ppi_bg_TCRmeta,
+                ppi_bg_panT_TCRLUX, ppi_bg_panT_CD4LUX, ppi_bg_panT_CD8LUX) %>%
   group_by(node_bg) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup()
@@ -276,17 +329,24 @@ ppi_bg %>%
 # ???
 
 # string PPIs -----------------------------------------------------------------------------------
-ppi_str_overall_LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>%                                                    pull(entry)), mode = "physical", set = "overall" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nCD4        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD4"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nnCD4       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso") %>% pull(entry)), mode = "physical", set = "nnCD4"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nnCD8       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso") %>% pull(entry)), mode = "physical", set = "nnCD8"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nCD8        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD8"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nnMeta    <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nMeta     <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_CD4meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_CD8meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_overall_LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>%                                                    pull(entry)), mode = "physical", set = "overall" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nCD4        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD4"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nnCD4       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso") %>% pull(entry)), mode = "physical", set = "nnCD4"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nnCD8       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso") %>% pull(entry)), mode = "physical", set = "nnCD8"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nCD8        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD8"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nnMeta    <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nMeta     <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_CD4meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_CD8meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_metaTCR   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)), mode = "physical", set = "metaTCR", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_panT_TCRLUX  <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_TCRLUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_panT_CD4LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD4LUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_panT_CD8LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD8LUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+
 # combine bg ppi sets to one long df
-ppi_str <- rbind(ppi_str_overall_LUX, ppi_str_nCD4, ppi_str_nnCD4, ppi_str_nnCD8, ppi_str_nCD8, ppi_bg_nnMeta, ppi_bg_nMeta, ppi_bg_CD4meta, ppi_bg_CD8meta) %>%
+ppi_str <- rbind(ppi_str_overall_LUX, ppi_str_nCD4, ppi_str_nnCD4, ppi_str_nnCD8, ppi_str_nCD8, ppi_str_nnMeta, 
+                 ppi_str_nMeta, ppi_str_CD4meta, ppi_str_CD8meta, ppi_str_metaTCR,
+                 ppi_str_panT_TCRLUX, ppi_str_panT_CD4LUX, ppi_str_panT_CD8LUX) %>%
   group_by(node_str) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup()
@@ -309,19 +369,26 @@ ppi_str %>%
 ################################################################################################################################################################################################################################
 ################################################################################################################################################################################################################################
 ## Complexes ###################################################################################################################################################################################################################
-sapply(list.files(path = "/Users/mgesell/Desktop/currentR/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
+sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
 # complex_protal complexes ------------------------------------------------------------------------------------------------------------------------------------------------------------
-comp_compp_overall_LUX <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta                                                      %>% pull(entry)) ), set = "overall")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nCD4        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  )   %>% pull(entry)) ), set = "nCD4" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nnCD4       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")   %>% pull(entry)) ), set = "nnCD4")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nCD8        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  )   %>% pull(entry)) ), set = "nCD8" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nnCD8       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")   %>% pull(entry)) ), set = "nnCD8")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nMeta     <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)) ), set = "nMeta"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nnMeta    <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)) ), set = "nnMeta" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_CD4meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)) ), set = "CD4meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_CD8meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_compp_overall_LUX <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full                                                      %>% pull(entry)) ), set = "overall")  
+comp_compp_nCD4        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  )   %>% pull(entry)) ), set = "nCD4" )  
+comp_compp_nnCD4       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")   %>% pull(entry)) ), set = "nnCD4")  
+comp_compp_nCD8        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  )   %>% pull(entry)) ), set = "nCD8" )  
+comp_compp_nnCD8       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")   %>% pull(entry)) ), set = "nnCD8")  
+comp_compp_nMeta     <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)) ), set = "nMeta"  )  
+comp_compp_nnMeta    <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)) ), set = "nnMeta" )  
+comp_compp_CD4meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)) ), set = "CD4meta")  
+comp_compp_CD8meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  
+comp_compp_CD8meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  
+comp_compp_metaTCR   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)) ), set = "metaTCR")  
+comp_compp_panT_TCRLUX    <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)) ), set = "panT_TCRLUX")  
+comp_compp_panT_CD4LUX   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)) ), set = "panT_CD4LUX")  
+comp_compp_panT_CD8LUX   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)) ), set = "panT_CD8LUX")  
 # merge df
-comp_compp_LUX <- rbind(comp_compp_overall_LUX, comp_compp_nCD4, comp_compp_nnCD4, comp_compp_nnCD8, comp_compp_nCD8, comp_compp_nnMeta, comp_compp_nMeta, comp_compp_CD4meta, comp_compp_CD8meta) %>%
+comp_compp_LUX <- rbind(comp_compp_overall_LUX, comp_compp_nCD4, comp_compp_nnCD4, comp_compp_nnCD8, comp_compp_nCD8, 
+                        comp_compp_nnMeta, comp_compp_nMeta, comp_compp_CD4meta, comp_compp_CD8meta, comp_compp_metaTCR,
+                        comp_compp_panT_TCRLUX, comp_compp_panT_CD4LUX, comp_compp_panT_CD8LUX) %>%
   group_by(complex_name_cp) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup() %>%
@@ -331,39 +398,49 @@ comp_compp_LUX <- rbind(comp_compp_overall_LUX, comp_compp_nCD4, comp_compp_nnCD
 plot_dual_distance_bubble(data = comp_compp_LUX,  
                           group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean", # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal") # plot parameters
+                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",   # distance parameters
+                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal") + # plot parameters
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 plot_dual_distance_bubble(data = comp_compp_LUX,  
-                          group_filter = c("overall"),  # data subset   set to NULL if full df is to be plottet
+                          group_filter = c("overall", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal") # plot parameters
+                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",  # distance parameters
+                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")  # plot parameters
 plot_dual_distance_bubble(data = comp_compp_LUX,  
                           group_filter = c("nCD4", "nnCD4", "nCD8", "nnCD8"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal") # plot parameters
+                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",  # distance parameters
+                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")  # plot parameters
 plot_dual_distance_bubble(data = comp_compp_LUX,  
-                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta"),  # data subset   set to NULL if full df is to be plottet
+                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal") # plot parameters
+                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",  # distance parameters
+                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")  # plot parameters
+plot_dual_distance_bubble(data = comp_compp_LUX,  
+                          group_filter = c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta",  "panT_CD8LUX"),  # data subset   set to NULL if full df is to be plottet
+                          min_recall = 0.5, min_p_value = NULL,  # data filters
+                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",   # distance parameters
+                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")   # plot parameters
 
 
-# compact complexes --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-comp_compp_overall_LUX <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta                                                      %>% pull(entry)) ), set = "overall")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nCD4        <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  )   %>% pull(entry)) ), set = "nCD4" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nnCD4       <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")   %>% pull(entry)) ), set = "nnCD4")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nCD8        <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  )   %>% pull(entry)) ), set = "nCD8" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nnCD8       <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")   %>% pull(entry)) ), set = "nnCD8")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nMeta     <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)) ), set = "nMeta"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_nnMeta    <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)) ), set = "nnMeta" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_CD4meta   <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)) ), set = "CD4meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-comp_compp_CD8meta   <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+# corum complexes --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+comp_corum_overall_LUX <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full                                                      %>% pull(entry)) ), set = "overall")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_nCD4        <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  )   %>% pull(entry)) ), set = "nCD4" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_nnCD4       <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")   %>% pull(entry)) ), set = "nnCD4")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_nCD8        <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  )   %>% pull(entry)) ), set = "nCD8" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_nnCD8       <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")   %>% pull(entry)) ), set = "nnCD8")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_nMeta     <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)) ), set = "nMeta"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_nnMeta    <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)) ), set = "nnMeta" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_CD4meta   <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)) ), set = "CD4meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_CD8meta   <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_metaTCR   <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)) ), set = "metaTCR")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_panT_TCRLUX  <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)) ), set = "panT_TCRLUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_panT_CD4LUX  <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)) ), set = "panT_CD4LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+comp_corum_panT_CD8LUX  <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)) ), set = "panT_CD8LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
 # merge df
-
-
-comp_cor <- rbind(comp_compp_overall_LUX, comp_compp_nCD4, comp_compp_nnCD4, comp_compp_nCD8, comp_compp_nnCD8, comp_compp_nMeta, comp_compp_nnMeta, comp_compp_CD4meta, comp_compp_CD8meta) %>%
+comp_cor <- rbind(comp_corum_overall_LUX, comp_corum_nCD4, comp_corum_nnCD4, comp_corum_nCD8, comp_corum_nnCD8, 
+                  comp_corum_nMeta, comp_corum_nnMeta, comp_corum_CD4meta, comp_corum_CD8meta, comp_corum_metaTCR,
+                  comp_corum_panT_TCRLUX, comp_corum_panT_CD4LUX, comp_corum_panT_CD8LUX) %>%
   group_by(complex_name_cor) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup() %>%
@@ -372,23 +449,38 @@ comp_cor <- rbind(comp_compp_overall_LUX, comp_compp_nCD4, comp_compp_nnCD4, com
 plot_dual_distance_bubble(data = comp_cor,  
                           group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean", # distance parameters
-                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") # plot parameters
+                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",    # distance parameters
+                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") + # plot parameters
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 plot_dual_distance_bubble(data = comp_cor,  
-                          group_filter = c("overall"),  # data subset   set to NULL if full df is to be plottet
+                          group_filter = c("overall", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean", # distance parameters
+                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",  # distance parameters
                           x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") # plot parameters
 plot_dual_distance_bubble(data = comp_cor,  
                           group_filter = c("nCD4", "nnCD4", "nCD8", "nnCD8"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean", # distance parameters
+                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",  # distance parameters
                           x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") # plot parameters
 plot_dual_distance_bubble(data = comp_cor,  
-                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta"),  # data subset   set to NULL if full df is to be plottet
+                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
                           min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean", # distance parameters
+                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",   # distance parameters
+                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes")  # plot parameters
+plot_dual_distance_bubble(data = comp_cor,  
+                          group_filter = c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta",  "panT_CD8LUX"),  # data subset   set to NULL if full df is to be plottet
+                          min_recall = 0.5, min_p_value = NULL,  # data filters
+                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",  # distance parameters
                           x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") # plot parameters
+
+
+
+
+
+
+
+
+
 
 
 

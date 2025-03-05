@@ -1,5 +1,5 @@
 
-plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_value,
+plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_value, 
                                       grouping, term_column, distance_column, distance_method,  # distance parameters
                                       x_var, y_var, size_var, fill_var, title_var) {                             # plot parameters
  
@@ -120,26 +120,40 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_valu
   
   # plotting ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
   if (is.null(fill_var)) {  # if there is no p_value or other continuous column to define color gradient 
-    plot <-  ggplot(data_ordered, aes(x = !!sym(x_var), y = !!sym(y_var))) +
+    plot <- ggplot(data_ordered, aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var)), shape = 21, color = "darkgrey", fill = "black") +
-      scale_size(range = c(0, 10), limits = c(0.33, 1)) + # ensure size scales comparable accross plots (same recall is same size) independent of min(recall) of data subset
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      labs(x = "GO Term", y = "Condition", size = "Recall", 
-           title = title_var) +
-      theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+      scale_size(range = c(0, 10), limits = c(0.33, 1)) +
+      labs(x = "GO Term", y = "Condition", size = "Recall", title = title_var) +  
+      theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), panel.grid.minor = element_line(color = "grey", linetype = "dotted")    )
+    # plot <-  ggplot(data_ordered, aes(x = !!sym(x_var), y = !!sym(y_var))) +
+    #   geom_point(aes(size = !!sym(size_var)), shape = 21, color = "darkgrey", fill = "black") +
+    #   scale_size(range = c(0, 10), limits = c(0.33, 1)) + # ensure size scales comparable accross plots (same recall is same size) independent of min(recall) of data subset
+    #   theme_minimal() +
+    #   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    #   labs(x = "GO Term", y = "Condition", size = "Recall", 
+    #        title = title_var) +
+    #   theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
     
   } else {                  # p_value or other continuous column defines color gradient 
     plot <-  ggplot(data_ordered, 
-                    aes(x = !!sym(x_var) , y = !!sym(y_var))) +
+                    aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var), fill = !!sym(fill_var)), shape = 21, color = "darkgrey") +
-      scale_size(range = c(0, 10), limits = c(0.33, 1)) + # ensure size scales comparable accross plots (same recall is same size) independent of min(recall) of data subset
-      scale_fill_gradient(low = "firebrick", high = "#fee0d2") + ##fee0d2
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      scale_size(range = c(0, 10), limits = c(0.33, 1)) +
+      scale_fill_gradient(low = "firebrick", high = "#fee0d2") +
       labs(x = "GO Term", y = "Condition", size = "Recall", fill = "P-value", 
-           title = title_var) +
-      theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+           title = title_var) +  
+      theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), panel.grid.minor = element_line(color = "grey", linetype = "dotted")    )
+    
+    # plot <-  ggplot(data_ordered, 
+    #                 aes(x = !!sym(x_var) , y = !!sym(y_var))) +
+    #   geom_point(aes(size = !!sym(size_var), fill = !!sym(fill_var)), shape = 21, color = "darkgrey") +
+    #   scale_size(range = c(0, 10), limits = c(0.33, 1)) + # ensure size scales comparable accross plots (same recall is same size) independent of min(recall) of data subset
+    #   scale_fill_gradient(low = "firebrick", high = "#fee0d2") + ##fee0d2
+    #   theme_minimal() +
+    #   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    #   labs(x = "GO Term", y = "Condition", size = "Recall", fill = "P-value", 
+    #        title = title_var) +
+    #   theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
   }
   
   return(plot) 

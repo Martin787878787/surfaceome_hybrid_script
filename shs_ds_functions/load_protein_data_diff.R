@@ -43,42 +43,44 @@ load_protein_data_diff <- function(directory_input) { ##########################
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
   
-  # Upset plot prep
-  comparisons <- unique(data_prot_diff$comparison)
-  sets <- lapply(comparisons, function(comp) {
-    data_prot_diff$entry[data_prot_diff$comparison == comp & abs(data_prot_diff$log2FC)  > FC_cutoff & data_prot_diff$adj_pvalue < pvalue_cutoff] # abs(data_prot_diff$log2FC) to include all regulated proteins
-  })
-  names(sets) <- comparisons
-  # UpSet plot
-  print(
-    upset(fromList(sets), 
-          nsets = length(comparisons),
-          order.by = "freq",
-          mainbar.y.label = "Intersection Size",
-          sets.x.label = "Set Size",
-          text.scale = c(1.3, 1.3, 1, 1, 1.3, 1),
-          point.size = 3,
-          line.size = 1)  
-  )
-  grid.text("SigRegulated (Up+Down) Overlap", x = 0.65, y = 0.95, gp = gpar(fontsize = 16, fontface = "bold"))
-  #
-  comparisons <- unique(data_prot_diff$comparison)
-  sets <- lapply(comparisons, function(comp) {
-    data_prot_diff$entry[data_prot_diff$comparison == comp & data_prot_diff$log2FC > FC_cutoff & data_prot_diff$adj_pvalue < pvalue_cutoff] # abs(data_prot_diff$log2FC) to include all regulated proteins
-  })
-  names(sets) <- comparisons
-  # UpSet plot
-  print(
-    upset(fromList(sets), 
-          nsets = length(comparisons),
-          order.by = "freq",
-          mainbar.y.label = "Intersection Size",
-          sets.x.label = "Set Size",
-          text.scale = c(1.3, 1.3, 1, 1, 1.3, 1),
-          point.size = 3,
-          line.size = 1)
-  )
-  grid.text("SigUp Overlap", x = 0.65, y = 0.95, gp = gpar(fontsize = 16, fontface = "bold"))
+  if (length(unique(data_prot_diff$comparison)) > 1) { 
+    # Upset plot prep
+    comparisons <- unique(data_prot_diff$comparison)
+    sets <- lapply(comparisons, function(comp) {
+      data_prot_diff$entry[data_prot_diff$comparison == comp & abs(data_prot_diff$log2FC)  > FC_cutoff & data_prot_diff$adj_pvalue < pvalue_cutoff] # abs(data_prot_diff$log2FC) to include all regulated proteins
+    })
+    names(sets) <- comparisons
+    # UpSet plot
+    print(
+      upset(fromList(sets), 
+            nsets = length(comparisons),
+            order.by = "freq",
+            mainbar.y.label = "Intersection Size",
+            sets.x.label = "Set Size",
+            text.scale = c(1.3, 1.3, 1, 1, 1.3, 1),
+            point.size = 3,
+            line.size = 1)  
+    )
+    grid.text("SigRegulated (Up+Down) Overlap", x = 0.65, y = 0.95, gp = gpar(fontsize = 16, fontface = "bold"))
+    #
+    comparisons <- unique(data_prot_diff$comparison)
+    sets <- lapply(comparisons, function(comp) {
+      data_prot_diff$entry[data_prot_diff$comparison == comp & data_prot_diff$log2FC > FC_cutoff & data_prot_diff$adj_pvalue < pvalue_cutoff] # abs(data_prot_diff$log2FC) to include all regulated proteins
+    })
+    names(sets) <- comparisons
+    # UpSet plot
+    print(
+      upset(fromList(sets), 
+            nsets = length(comparisons),
+            order.by = "freq",
+            mainbar.y.label = "Intersection Size",
+            sets.x.label = "Set Size",
+            text.scale = c(1.3, 1.3, 1, 1, 1.3, 1),
+            point.size = 3,
+            line.size = 1)
+    )
+    grid.text("SigUp Overlap", x = 0.65, y = 0.95, gp = gpar(fontsize = 16, fontface = "bold"))
+  }
   
   return(data_prot_diff)
 }
