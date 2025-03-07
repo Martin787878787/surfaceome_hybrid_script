@@ -1,8 +1,8 @@
 # belongs to shs_downstream
 go_gost <- function(query_list, max_term_size, set) {
-# function requires ensembl
+  # function requires ensembl
   # ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-
+  
   
   ####### backbone dummy
   result <- gost(query = gconvert(query_list, #setdiff(data_CSC_w_ENSG_table$Act_0, data_CSC_w_ENSG_table$Act_2h),  # this works best, uniprot identifiers worst, primary_gene_names good
@@ -44,7 +44,7 @@ go_gost <- function(query_list, max_term_size, set) {
     values  = unique(unlist(strsplit(result_result$intersection, ","))),
     mart    = ensembl
   )
-
+  
   # Define the lookup function ----- 
   lookup_mapping <- function(ens_ids, mapping, column_to_retrieve) {
     # Always match with uniprot_gn_id
@@ -75,11 +75,11 @@ go_gost <- function(query_list, max_term_size, set) {
     
     return(data)
   }
-
+  
   # specify which columns to translate
   result_result <- apply_mapping(result_result, mapping, column_to_retrieve = "external_gene_name", new_column_name = "intersection_gene")
   result_result <- apply_mapping(result_result, mapping, column_to_retrieve = "uniprot_gn_id"     , new_column_name = "intersection_up")
   
   
- return(result_result) 
+  return(result_result) 
 }

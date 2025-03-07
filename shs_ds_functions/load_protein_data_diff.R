@@ -12,13 +12,13 @@ load_protein_data_diff <- function(directory_input) { ##########################
   # QC plots
   print(
     ggplot(data_prot_diff, aes(x = comparison, y = log2FC)) +
-    geom_boxplot() +
-    theme_minimal() +
-    labs(title = "Log2 Fold Change by Comparison",
-         x = "Comparison",
-         y = "Log2 Fold Change") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    )
+      geom_boxplot() +
+      theme_minimal() +
+      labs(title = "Log2 Fold Change by Comparison",
+           x = "Comparison",
+           y = "Log2 Fold Change") +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
   print(
     ggplot(data_prot_diff, aes(x = comparison, y = adj_pvalue)) +
       geom_boxplot() +
@@ -84,6 +84,5 @@ load_protein_data_diff <- function(directory_input) { ##########################
   
   return(data_prot_diff)
 }
-  
-  
-  
+
+

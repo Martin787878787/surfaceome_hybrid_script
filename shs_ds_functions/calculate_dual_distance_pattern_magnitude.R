@@ -1,52 +1,52 @@
 # belongs to shs_downstream
 # purpuse = calculate distances for x and y axis data for nice plots
 calculate_dual_distance_pattern_magnitude <- function(data, terms, term_column, distance_column, distance_method) {
-
+  
   # Filter and arrange data
-    data <- data %>%
-      filter(!!sym(term_column) %in% terms)
-    
-    # Calculate distance matrix (for similarity clustering)
-    data_w <- data %>%
-      dplyr::select(comparison, !!sym(term_column), !!sym(distance_column)) %>%
-      distinct() %>%
-      pivot_wider(names_from = comparison, values_from = !!sym(distance_column), values_fill = 0)
-    
-    # Create a binary presence/absence matrix
-    data_w_binary <- data_w
-    data_w_binary[, -1] <- ifelse(data_w_binary[, -1] > 0, 1, 0)
-    
-    # Calculate distance based on binary data
-    dist_matrix   <- dist(data_w_binary[, -1], method = distance_method )# distance_method = "euclidean"
-    hclust_result <- hclust(dist_matrix)
-    term_order <- data_w %>% pull(!!sym(term_column)) %>% .[hclust_result$order]
-    
-    # Calculate combined recall for secondary sorting
-    data_w$combined_recall <- rowSums(data_w[, -1])
-    
-    # Order terms based on clustering and combined recall
-    term_order_final <- data_w %>%
-      mutate(term = !!sym(term_column)) %>%
-      arrange(match(term, term_order), desc(combined_recall)) %>%
-      pull(term)
-    
-    # Distance of comparisons
-    comparison_dist <- dist(t(data_w_binary[, -1]), method = distance_method)
-    comparison_hclust <- hclust(comparison_dist)
-    comparison_order <- colnames(data_w)[-1][comparison_hclust$order]
-    
-    # Order df based on clustering and combined recall
-    data_ordered <- data %>%
-      mutate(
-        term_name = factor(!!sym(term_column), levels = term_order_final),
-        comparison = factor(comparison, levels = comparison_order)
-      )
-    
-    return(data_ordered) 
-  }
+  data <- data %>%
+    filter(!!sym(term_column) %in% terms)
   
+  # Calculate distance matrix (for similarity clustering)
+  data_w <- data %>%
+    dplyr::select(comparison, !!sym(term_column), !!sym(distance_column)) %>%
+    distinct() %>%
+    pivot_wider(names_from = comparison, values_from = !!sym(distance_column), values_fill = 0)
   
+  # Create a binary presence/absence matrix
+  data_w_binary <- data_w
+  data_w_binary[, -1] <- ifelse(data_w_binary[, -1] > 0, 1, 0)
   
+  # Calculate distance based on binary data
+  dist_matrix   <- dist(data_w_binary[, -1], method = distance_method )# distance_method = "euclidean"
+  hclust_result <- hclust(dist_matrix)
+  term_order <- data_w %>% pull(!!sym(term_column)) %>% .[hclust_result$order]
+  
+  # Calculate combined recall for secondary sorting
+  data_w$combined_recall <- rowSums(data_w[, -1])
+  
+  # Order terms based on clustering and combined recall
+  term_order_final <- data_w %>%
+    mutate(term = !!sym(term_column)) %>%
+    arrange(match(term, term_order), desc(combined_recall)) %>%
+    pull(term)
+  
+  # Distance of comparisons
+  comparison_dist <- dist(t(data_w_binary[, -1]), method = distance_method)
+  comparison_hclust <- hclust(comparison_dist)
+  comparison_order <- colnames(data_w)[-1][comparison_hclust$order]
+  
+  # Order df based on clustering and combined recall
+  data_ordered <- data %>%
+    mutate(
+      term_name = factor(!!sym(term_column), levels = term_order_final),
+      comparison = factor(comparison, levels = comparison_order)
+    )
+  
+  return(data_ordered) 
+}
+
+
+
 #   
 #   
 #     
@@ -100,7 +100,7 @@ calculate_dual_distance_pattern_magnitude <- function(data, terms, term_column, 
 
 
 
-  
+
 #   
 #   
 #   

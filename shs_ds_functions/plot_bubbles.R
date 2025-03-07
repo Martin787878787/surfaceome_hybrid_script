@@ -1,7 +1,7 @@
 # belongs to shs_downstream
 # 
 plot_bubbles <- function(data, x_var, y_var, size_var, fill_var, title_var) {
-
+  
   if (is.null(fill_var)) {
     plot <-  ggplot(data, aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var)), shape = 21, color = "darkgrey", fill = "black") +
@@ -24,6 +24,6 @@ plot_bubbles <- function(data, x_var, y_var, size_var, fill_var, title_var) {
            title = title_var) +
       theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
   }
-
+  
   return(plot) 
 }

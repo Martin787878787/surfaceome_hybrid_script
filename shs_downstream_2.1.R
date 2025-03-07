@@ -149,13 +149,13 @@ data_LUX_prot_diff_v24_v31_total  <- rbind(data_LUX_prot_diff_v24,
 
 ################################################################################################################################################
 # set plot theme for script (from Amanda K)
-  # my plot theme to fit most journal figure requirements:
-  # black axis ticks and borders;   
-  # 5-7pt or 6-8pt text for a 2-panel figure    
-  # Line width 0.5-1.5 pt
-  # Colour blind friendly colour scheme (would recommend defining colours in source functions and use throughout) e.g. no red and green used together
-  # Gray fills between 10-80%
-  # Figure resolution at least 300 dpi ( I like to export in pdf not svg or tiff if using ggsave so figure is small and vectorized)
+# my plot theme to fit most journal figure requirements:
+# black axis ticks and borders;   
+# 5-7pt or 6-8pt text for a 2-panel figure    
+# Line width 0.5-1.5 pt
+# Colour blind friendly colour scheme (would recommend defining colours in source functions and use throughout) e.g. no red and green used together
+# Gray fills between 10-80%
+# Figure resolution at least 300 dpi ( I like to export in pdf not svg or tiff if using ggsave so figure is small and vectorized)
 plot_theme <- function() {
   theme_classic() %+replace%
     theme(
@@ -187,11 +187,11 @@ data_CSC_prot_LUX_filtered <- data_CSC_prot_v31 %>%
   filter(entry %in% unique(data_LUX_prot_v31$entry) & log2_median > 0) 
 data_CSC_prot_LUX_filtered <- data_CSC_prot_LUX_filtered  %>%
   mutate(# all enriched hits
-         TCR_LUX_sigup   = ifelse(entry %in% unique(data_LUX_prot_diff_v31 %>%                                                        filter(log2FC >1) %>% pull(entry) ), "sig_up", "non_sig"),
-         # positive lUX FC and mentioned 4x (core enriched)
-         TCR_LUX_core    = ifelse(entry %in% unique(data_LUX_prot_diff_v31 %>% group_by(entry) %>% filter(n() == 4) %>% ungroup() %>% filter(log2FC >1) %>% pull(entry) ), "sig_up_core", ""),
-         LUX_signal_plot = if_else(!is.na(TCR_LUX_core) & TCR_LUX_core != "", TCR_LUX_core, TCR_LUX_sigup)
-         )
+    TCR_LUX_sigup   = ifelse(entry %in% unique(data_LUX_prot_diff_v31 %>%                                                        filter(log2FC >1) %>% pull(entry) ), "sig_up", "non_sig"),
+    # positive lUX FC and mentioned 4x (core enriched)
+    TCR_LUX_core    = ifelse(entry %in% unique(data_LUX_prot_diff_v31 %>% group_by(entry) %>% filter(n() == 4) %>% ungroup() %>% filter(log2FC >1) %>% pull(entry) ), "sig_up_core", ""),
+    LUX_signal_plot = if_else(!is.na(TCR_LUX_core) & TCR_LUX_core != "", TCR_LUX_core, TCR_LUX_sigup)
+  )
 # Create a boxplot of log2_median grouped by LUX_signal_plot
 ggplot(data_CSC_prot_LUX_filtered, aes(x = LUX_signal_plot, y = log2_median, fill = LUX_signal_plot)) +
   geom_boxplot(color = "black") +
@@ -231,33 +231,25 @@ gost_LUX <- rbind(gost_overall_LUX, gost_nCD4, gost_nnCD4, gost_nCD8, gost_nnCD8
   group_by(term_name) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup()
-# plotting
-plot_dual_distance_bubble(data = gost_LUX,  
-                          group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") + # plot parameters
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-plot_dual_distance_bubble(data = gost_LUX,  
-                          group_filter = c("overall", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
-plot_dual_distance_bubble(data = gost_LUX,  
-                          group_filter = c("nCD4", "nnCD4", "nCD8", "nnCD8"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
-plot_dual_distance_bubble(data = gost_LUX,  
-                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
-plot_dual_distance_bubble(data = gost_LUX,  
-                          group_filter = c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta",  "panT_CD8LUX"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment")  # plot parameters
+# plotting ------
+common_params <- list( # Define common plot parameters
+  data = gost_LUX,  min_recall = 0.5,    min_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    title_var = "GO Term Enrichment" # plot parameters
+)
+group_filters <- list( # Define different group filters
+  NULL,
+  c("overall", "metaTCR"),
+  c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
+  c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
+  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX")
+)
+# Loop through group filters and create plots
+plots_go_LUX <- lapply(group_filters, function(filter) {
+  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+  if (is.null(filter)) {     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))   }
+  print(plot)  # display plot
+  return(plot) # store plot 
+})
 
 ## CSC  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 gost_overall_CSC        <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta                                                 %>% pull(entry)), set = "overall"            , max_term_size = 100)
@@ -272,28 +264,26 @@ gost_CSC <- rbind(gost_overall_CSC, gost_nCD4_vs_nCD8, gost_nCD4_vs_nnCD4, gost_
   group_by(term_name) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup()
-# plotting
-plot_dual_distance_bubble(data = gost_CSC,  
-                          group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") + # plot parameters
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-plot_dual_distance_bubble(data = gost_CSC,  
-                          group_filter = c("overall"), # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
-plot_dual_distance_bubble(data = gost_CSC,  
-                          group_filter = c("CD4meta_vs_CD8meta", "nMeta_vs_nnMeta"),  # data subset   set to NULL if full df is to be plottet 
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
-plot_dual_distance_bubble(data = gost_CSC,  
-                          group_filter = c("nCD4_vs_nnCD4", "nCD8_vs_nnCD8", "nCD4_vs_nCD8","nnCD4_vs_nnCD8"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = 0.05,  # data filters
-                          grouping = "comparison", term_column = "term_name", distance_column = "recall", distance_method = "euclidean",          # distance parameters
-                          x_var = "comparison", y_var = "term_name", size_var = "recall", fill_var = "p_value", title_var = "GO Term Enrichment") # plot parameters
+# plotting ------
+common_params <- list( # Define common plot parameters
+  data = gost_CSC,
+  min_recall = 0.5,  min_p_value = 0.05,  grouping = "comparison",  term_column = "term_name", distance_column = "recall",  distance_method = "euclidean", # distance parameters
+  x_var = "comparison",  y_var = "term_name",  size_var = "recall",  fill_var = "p_value",  title_var = "GO Term Enrichment"                               # distance parameters
+)
+group_filters <- list( # Define different group filters
+  NULL,
+  c("overall"),
+  c("CD4meta_vs_CD8meta", "nMeta_vs_nnMeta"),
+  c("nCD4_vs_nnCD4"     , "nCD8_vs_nnCD8", "nCD4_vs_nCD8", "nnCD4_vs_nnCD8")
+)
+# Loop through group filters and create plots
+plots_go_CSC <- lapply(group_filters, function(filter) {
+  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+  if (is.null(filter)) { plot <- plot + theme(axis.text.x = element_text(angle = 25, hjust = 1))  }
+  print(plot)
+  return(plot)
+})
+# END gost ________________________________________________________________________________________________________________________________________________________________________
 
 ## PPIs #########################################################################################################################################################################
 tcr_chains <- poi_reference %>% filter(!tcr_chains_manual_entry == "") %>% pull(tcr_chains_manual_entry)
@@ -319,12 +309,21 @@ ppi_bg <- rbind(ppi_bg_overall_LUX, ppi_bg_nCD4, ppi_bg_nnCD4, ppi_bg_nnCD8, ppi
   group_by(node_bg) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup()
+#
+ppi_bg %>%
+  ggplot(aes(x = comparison, y = node_degree_biogrid_global)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "BioGrid: Global Degree of Query Proteins") +
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0.5, vjust = -0.5, color = "black", size = 5) 
 ppi_bg %>%
   ggplot(aes(x = comparison, y = node_degree_biogrid_query_subset)) +
   geom_boxplot() +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "Node Degrees Biogrid")
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "BioGrid: Query Internal Degree") +
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0, vjust = -0.5, color = "black", size = 5) 
 # not sure how to continue analysis from there
 # ???
 
@@ -354,15 +353,17 @@ ppi_str <- rbind(ppi_str_overall_LUX, ppi_str_nCD4, ppi_str_nnCD4, ppi_str_nnCD8
 ppi_str %>%
   ggplot(aes(x = comparison, y = node_degree_string_phys_global)) +
   geom_boxplot() +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "Comparison", y = "Node Degree (STRING)", title = "Global Physical STRING Degree")
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (STRING)", title = "STRING: Global Physical Degree of Query Proteins") +
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0.5, vjust = -0.5, color = "black", size = 5) 
 ppi_str %>%
   ggplot(aes(x = comparison, y = node_degree_string_phys_query_subset)) +
   geom_boxplot() +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "Comparison", y = "Node Degree (STRING)", title = "Query Internal Physical STRING Degree")# not sure how to continue analysis from there
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (STRING)", title = "STRING: Query Internal Physical Degree") +# not sure how to continue analysis from there
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0, vjust = -0.5, color = "black", size = 5) 
 # ???
 ## PPIs end _____________________________________________________________________________________________________________________________________________________________________
 
@@ -371,57 +372,46 @@ ppi_str %>%
 ## Complexes ###################################################################################################################################################################################################################
 sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
 # complex_protal complexes ------------------------------------------------------------------------------------------------------------------------------------------------------------
-comp_compp_overall_LUX <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full                                                      %>% pull(entry)) ), set = "overall")  
-comp_compp_nCD4        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  )   %>% pull(entry)) ), set = "nCD4" )  
-comp_compp_nnCD4       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")   %>% pull(entry)) ), set = "nnCD4")  
-comp_compp_nCD8        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  )   %>% pull(entry)) ), set = "nCD8" )  
-comp_compp_nnCD8       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")   %>% pull(entry)) ), set = "nnCD8")  
-comp_compp_nMeta     <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)) ), set = "nMeta"  )  
-comp_compp_nnMeta    <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)) ), set = "nnMeta" )  
-comp_compp_CD4meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)) ), set = "CD4meta")  
-comp_compp_CD8meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  
-comp_compp_CD8meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  
-comp_compp_metaTCR   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)) ), set = "metaTCR")  
-comp_compp_panT_TCRLUX    <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)) ), set = "panT_TCRLUX")  
-comp_compp_panT_CD4LUX   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)) ), set = "panT_CD4LUX")  
-comp_compp_panT_CD8LUX   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)) ), set = "panT_CD8LUX")  
+comp_cp_overall_LUX <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full                                                      %>% pull(entry)) ), set = "overall")  
+comp_cp_nCD4        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  )   %>% pull(entry)) ), set = "nCD4" )  
+comp_cp_nnCD4       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso")   %>% pull(entry)) ), set = "nnCD4")  
+comp_cp_nCD8        <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  )   %>% pull(entry)) ), set = "nCD8" )  
+comp_cp_nnCD8       <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso")   %>% pull(entry)) ), set = "nnCD8")  
+comp_cp_nMeta     <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)) ), set = "nMeta"  )  
+comp_cp_nnMeta    <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)) ), set = "nnMeta" )  
+comp_cp_CD4meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)) ), set = "CD4meta")  
+comp_cp_CD8meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  
+comp_cp_CD8meta   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)) ), set = "CD8meta")  
+comp_cp_metaTCR   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)) ), set = "metaTCR")  
+comp_cp_panT_TCRLUX    <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)) ), set = "panT_TCRLUX")  
+comp_cp_panT_CD4LUX   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)) ), set = "panT_CD4LUX")  
+comp_cp_panT_CD8LUX   <- complex_compp(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)) ), set = "panT_CD8LUX")  
 # merge df
-comp_compp_LUX <- rbind(comp_compp_overall_LUX, comp_compp_nCD4, comp_compp_nnCD4, comp_compp_nnCD8, comp_compp_nCD8, 
-                        comp_compp_nnMeta, comp_compp_nMeta, comp_compp_CD4meta, comp_compp_CD8meta, comp_compp_metaTCR,
-                        comp_compp_panT_TCRLUX, comp_compp_panT_CD4LUX, comp_compp_panT_CD8LUX) %>%
+comp_cp_LUX <- rbind(comp_cp_overall_LUX, comp_cp_nCD4, comp_cp_nnCD4, comp_cp_nnCD8, comp_cp_nCD8, 
+                     comp_cp_nnMeta, comp_cp_nMeta, comp_cp_CD4meta, comp_cp_CD8meta, comp_cp_metaTCR,
+                     comp_cp_panT_TCRLUX, comp_cp_panT_CD4LUX, comp_cp_panT_CD8LUX) %>%
   group_by(complex_name_cp) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup() %>%
   arrange(desc(complex_recall_cp))
-
-
-plot_dual_distance_bubble(data = comp_compp_LUX,  
-                          group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",   # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal") + # plot parameters
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-plot_dual_distance_bubble(data = comp_compp_LUX,  
-                          group_filter = c("overall", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",  # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")  # plot parameters
-plot_dual_distance_bubble(data = comp_compp_LUX,  
-                          group_filter = c("nCD4", "nnCD4", "nCD8", "nnCD8"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",  # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")  # plot parameters
-plot_dual_distance_bubble(data = comp_compp_LUX,  
-                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",  # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")  # plot parameters
-plot_dual_distance_bubble(data = comp_compp_LUX,  
-                          group_filter = c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta",  "panT_CD8LUX"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "recommended_name", distance_column = "complex_recall_cp", distance_method = "euclidean",   # distance parameters
-                          x_var = "comparison", y_var = "recommended_name", size_var = "complex_recall_cp", fill_var = NULL, title_var = "Complex Portal")   # plot parameters
-
+# plotting Complex Portal ------
+common_params <- list( # Define common plot parameters
+  data = comp_cp_LUX,  min_recall = 0.5,    min_p_value = NULL,    grouping = "comparison",    term_column = "recommended_name",    distance_column = "complex_recall_cp",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "recommended_name",    size_var = "complex_recall_cp",  fill_var = NULL,    title_var = "Complex Portal" # plot parameters
+)
+group_filters <- list( # Define different group filters
+  NULL,
+  c("overall", "metaTCR"),
+  c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
+  c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
+  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX")
+)
+plots_cp <- lapply(group_filters, function(filter) { # Loop through group filters and create plots
+  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+  if (is.null(filter)) {     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))   }   # Add custom theme for NULL filter
+  print(plot) # Display the plot in RStudio's Plots window
+  return(plot) # Store the plot in a list for further use
+})
 
 # corum complexes --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 comp_corum_overall_LUX <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full                                                      %>% pull(entry)) ), set = "overall")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
@@ -446,33 +436,26 @@ comp_cor <- rbind(comp_corum_overall_LUX, comp_corum_nCD4, comp_corum_nnCD4, com
   ungroup() %>%
   arrange(desc(complex_recall_cor))
 
-plot_dual_distance_bubble(data = comp_cor,  
-                          group_filter = NULL,  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",    # distance parameters
-                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") + # plot parameters
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-plot_dual_distance_bubble(data = comp_cor,  
-                          group_filter = c("overall", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",  # distance parameters
-                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") # plot parameters
-plot_dual_distance_bubble(data = comp_cor,  
-                          group_filter = c("nCD4", "nnCD4", "nCD8", "nnCD8"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",  # distance parameters
-                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") # plot parameters
-plot_dual_distance_bubble(data = comp_cor,  
-                          group_filter = c("CD4meta", "CD8meta", "nMeta", "nnMeta", "metaTCR"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",   # distance parameters
-                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes")  # plot parameters
-plot_dual_distance_bubble(data = comp_cor,  
-                          group_filter = c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta",  "panT_CD8LUX"),  # data subset   set to NULL if full df is to be plottet
-                          min_recall = 0.5, min_p_value = NULL,  # data filters
-                          grouping = "comparison", term_column = "complex_name_cor", distance_column = "complex_recall_cor", distance_method = "euclidean",  # distance parameters
-                          x_var = "comparison", y_var = "complex_name_cor", size_var = "complex_recall_cor", fill_var = NULL, title_var = "Corum Complexes") # plot parameters
-
+# plotting Corum Complexes ------
+common_params <- list( # Define common plot parameters
+  data = comp_cor,  min_recall = 0.5,    min_p_value = NULL,    grouping = "comparison",    term_column = "complex_name_cor",    distance_column = "complex_recall_cor",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "complex_name_cor",    size_var = "complex_recall_cor",    fill_var = NULL,    title_var = "Corum Complexes" # plot parameters
+)
+group_filters <- list( # Define different group filters
+  NULL,
+  c("overall", "metaTCR"),
+  c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
+  c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
+  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX")
+)
+# Loop through group filters and create plots
+plots_cor <- lapply(group_filters, function(filter) {
+  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+  # Add custom theme for NULL filter
+  if (is.null(filter)) {     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))   }
+  print(plot) # Display the plot in RStudio's Plots window
+  return(plot) # Store the plot in a list for further use
+})
 
 
 
@@ -491,9 +474,9 @@ plot_dual_distance_bubble(data = comp_cor,
 # ===========================================================================================================================================================================
 # color palettes (define after imputation!)
 # colors_csc_zscore <- colorRamp2(c(NA_impute_CSC_zscore, max(data_CSC_prot_v31$log2_z_score, na.rm = TRUE)),
-                                # c("white","firebrick"))  
+# c("white","firebrick"))  
 colors_csc_log2median <- colorRamp2(c(min(data_CSC_prot_v31$log2_median, na.rm = TRUE), max(data_CSC_prot_v31$log2_median, na.rm = TRUE)),
-                                c("white","firebrick"))  
+                                    c("white","firebrick"))  
 
 
 
@@ -533,26 +516,26 @@ for (pcoi in pcoi_list) {
     png(filename = paste0(directory_output, "/_heatmap_merge/_", pcoi, ".png"), width = 800, height = 200 + length(unique(df_long$entry_name))*50)
     print(
       ggplot(df_long, aes(x = condition, y = entry_name)) +
-      geom_tile(aes(fill = color), color = "grey") +
-      scale_fill_identity(guide = "none") +
-      new_scale_fill() +
-      geom_point(data = df_long[df_long$dataset == "LUX",], 
-                 aes(fill = factor(value)), shape = 22, size = 3, stroke = 0) +
-      scale_fill_manual(values = lux_colors, name = "LUX") +
-      new_scale_color() +
-      geom_point(data = df_long[df_long$dataset == "CSC",], 
-                 aes(color = value), shape = 21, size = 3, stroke = 0) +
-      scale_color_gradient(low = "white", high = "firebrick", name = "CSC", limits = range(data_CSC_prot_v31$log2_z_score, na.rm = TRUE)) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
-            axis.text.y = element_text(size = 10),
-            panel.grid = element_blank()) +
-      labs(x = "Condition", y = "Entry_name", title = paste(pcoi))
+        geom_tile(aes(fill = color), color = "grey") +
+        scale_fill_identity(guide = "none") +
+        new_scale_fill() +
+        geom_point(data = df_long[df_long$dataset == "LUX",], 
+                   aes(fill = factor(value)), shape = 22, size = 3, stroke = 0) +
+        scale_fill_manual(values = lux_colors, name = "LUX") +
+        new_scale_color() +
+        geom_point(data = df_long[df_long$dataset == "CSC",], 
+                   aes(color = value), shape = 21, size = 3, stroke = 0) +
+        scale_color_gradient(low = "white", high = "firebrick", name = "CSC", limits = range(data_CSC_prot_v31$log2_z_score, na.rm = TRUE)) +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+              axis.text.y = element_text(size = 10),
+              panel.grid = element_blank()) +
+        labs(x = "Condition", y = "Entry_name", title = paste(pcoi))
     )
     dev.off()
     print(paste("Heatmap merge saved for:", pcoi))
   } else {
-      ### Clustering ================================================================================
+    ### Clustering ================================================================================
     if(cluster_based_on == "CSC_continous") {             # for continuous data
       # Extract LUX data and convert to matrix for clustering
       cluster_data <- as.matrix(df[, grep("LUX$", names(df))])
@@ -573,7 +556,7 @@ for (pcoi in pcoi_list) {
       row_order <- hc$order
       # ================================================================================================
     }
-  
+    
     ## enforce the cluster order into dataframe  
     df_ordered <- df[row_order, ]
     # Prepare the data
@@ -594,25 +577,25 @@ for (pcoi in pcoi_list) {
     png(filename = paste0(directory_output, "/_heatmap_merge/_", pcoi, ".png"), width = 800, height = 200 + length(unique(df_long$entry_name))*10)
     print(
       ggplot(df_long, aes(x = condition, y = entry_name)) +
-      geom_tile(aes(fill = color), color = "grey") +
-      scale_fill_identity(guide = "none") +
-      new_scale_fill() +
-      geom_point(data = df_long[df_long$dataset == "LUX",], 
-                 aes(fill = factor(value)), shape = 22, size = 3, stroke = 0) +
-      scale_fill_manual(values = lux_colors, name = "LUX") +
-      new_scale_color() +
-      geom_point(data = df_long[df_long$dataset == "CSC",], 
-                 aes(color = value), shape = 21, size = 3, stroke = 0) +
-      scale_color_gradient(low = "white", high = "firebrick", name = "CSC", limits = range(data_CSC_prot_v31$log2_z_score, na.rm = TRUE)) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
-            axis.text.y = element_text(size = 10),
-            panel.grid = element_blank()) +
-      labs(x = "Condition", y = "Entry_name", title = paste(pcoi))
+        geom_tile(aes(fill = color), color = "grey") +
+        scale_fill_identity(guide = "none") +
+        new_scale_fill() +
+        geom_point(data = df_long[df_long$dataset == "LUX",], 
+                   aes(fill = factor(value)), shape = 22, size = 3, stroke = 0) +
+        scale_fill_manual(values = lux_colors, name = "LUX") +
+        new_scale_color() +
+        geom_point(data = df_long[df_long$dataset == "CSC",], 
+                   aes(color = value), shape = 21, size = 3, stroke = 0) +
+        scale_color_gradient(low = "white", high = "firebrick", name = "CSC", limits = range(data_CSC_prot_v31$log2_z_score, na.rm = TRUE)) +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+              axis.text.y = element_text(size = 10),
+              panel.grid = element_blank()) +
+        labs(x = "Condition", y = "Entry_name", title = paste(pcoi))
     )
     dev.off()
     print(paste("Heatmap merge saved for:", pcoi))
-    }
+  }
 }
 
 ########################################################################################################
@@ -647,18 +630,18 @@ for (pcoi in pcoi_list) {
     png(filename = paste0(directory_output, "/_heatmap_lux/_", pcoi, ".png"), width = 800, height = 200 + nrow(data_LUX_pcoi_ss)*50)
     print(
       pheatmap(data_LUX_pcoi_ss,
-             color = my_colors,
-             cluster_rows = FALSE,  # No clustering
-             cluster_cols = FALSE,
-             show_rownames = TRUE,
-             show_colnames = TRUE,
-             main = paste(pcoi),
-             fontsize_row = 22,
-             fontsize_col = 22,
-             fontsize = 25,
-             legend = FALSE)
+               color = my_colors,
+               cluster_rows = FALSE,  # No clustering
+               cluster_cols = FALSE,
+               show_rownames = TRUE,
+               show_colnames = TRUE,
+               main = paste(pcoi),
+               fontsize_row = 22,
+               fontsize_col = 22,
+               fontsize = 25,
+               legend = FALSE)
     )
-      dev.off()
+    dev.off()
     
     print(paste(pcoi, "without clustering"))
     
@@ -670,21 +653,21 @@ for (pcoi in pcoi_list) {
     png(filename = paste0(directory_output, "/_heatmap_lux/_", pcoi, ".png"), width = 800, height = 200 + nrow(data_LUX_pcoi_ss)*50)
     print(
       pheatmap(data_LUX_pcoi_ss,
-             color = my_colors,
-             cluster_rows = TRUE,
-             cluster_cols = TRUE,
-             show_rownames = TRUE,
-             show_colnames = TRUE,
-             main = paste(pcoi),
-             fontsize_row = 22,
-             fontsize_col = 22,
-             fontsize = 25,
-             legend = FALSE)
+               color = my_colors,
+               cluster_rows = TRUE,
+               cluster_cols = TRUE,
+               show_rownames = TRUE,
+               show_colnames = TRUE,
+               main = paste(pcoi),
+               fontsize_row = 22,
+               fontsize_col = 22,
+               fontsize = 25,
+               legend = FALSE)
     )
     dev.off()
-  
-  print(paste("LUX heatmap saved for:", pcoi))
-  
+    
+    print(paste("LUX heatmap saved for:", pcoi))
+    
   }
 }
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -711,8 +694,8 @@ data_csc_medianlog2_L <- data_csc_medianlog2_L %>%
   pivot_wider(id_cols = entry, names_from = condition, values_from = log2_median) %>%
   pivot_longer(cols = c(nCD4,  nCD8, nnCD8, nnCD4), names_to = "condition", values_to = "log2_median") %>%
   left_join(proteome %>% dplyr::select(-c("reviewed","protein_names", "gene_names", "organism", "length", "gene_ontology_go", "gene_ontology_biological_process", "gene_ontology_cellular_component", 
-                                   "gene_ontology_molecular_function", "gene_ontology_i_ds", "subcellular_location_cc", "transmembrane", "function_cc", "pathway", "gene_names_primary", "disulfide_bond", 
-                                   "glycosylation", "lipidation", "intramembrane", "topological_domain", "ensembl", "sequence", "interacts_with")),
+                                          "gene_ontology_molecular_function", "gene_ontology_i_ds", "subcellular_location_cc", "transmembrane", "function_cc", "pathway", "gene_names_primary", "disulfide_bond", 
+                                          "glycosylation", "lipidation", "intramembrane", "topological_domain", "ensembl", "sequence", "interacts_with")),
             by = "entry") %>%
   mutate(entry_name = gsub("_HUMAN", "", entry_name)) %>%
   dplyr::select(sort(names(.))) %>%
@@ -732,23 +715,23 @@ for (pcoi in pcoi_list) {
   } else {
     png(filename = paste0(directory_output, "/_lineplot_csc/_", pcoi, ".png"), width = 800, height = 200 + length(unique(data_CSC_median_ss$entry_name))*50)
     print(
-    ggplot(data_CSC_median_ss, aes(x = condition, y = log2_median, color = entry_name, group = entry_name)) +
-      geom_line(size = 1.1) +
-      geom_point(size = 3, shape =18) +
-      theme_minimal() +
-      labs(x = "Condition", y = "Abundance", title = paste0("Median log2 Protein Abundances: ", pcoi) +
-      theme(
-        axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
-        axis.text.y = element_text(size = 15),
-        axis.title = element_text(size = 15),
-        legend.title = element_text(size = 12),
-        legend.text = element_text(size = 12),
-        legend.key.size = unit(1.5, "lines")
-      ) +
-      scale_color_viridis(discrete = TRUE, option = "turbo") +
-      ylim(min(data_csc_medianlog2_L$log2_median, na.rm = TRUE) - 0.1, 
-           max(data_csc_medianlog2_L$log2_median, na.rm = TRUE) + 0.1)
-    )
+      ggplot(data_CSC_median_ss, aes(x = condition, y = log2_median, color = entry_name, group = entry_name)) +
+        geom_line(size = 1.1) +
+        geom_point(size = 3, shape =18) +
+        theme_minimal() +
+        labs(x = "Condition", y = "Abundance", title = paste0("Median log2 Protein Abundances: ", pcoi) +
+               theme(
+                 axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
+                 axis.text.y = element_text(size = 15),
+                 axis.title = element_text(size = 15),
+                 legend.title = element_text(size = 12),
+                 legend.text = element_text(size = 12),
+                 legend.key.size = unit(1.5, "lines")
+               ) +
+               scale_color_viridis(discrete = TRUE, option = "turbo") +
+               ylim(min(data_csc_medianlog2_L$log2_median, na.rm = TRUE) - 0.1, 
+                    max(data_csc_medianlog2_L$log2_median, na.rm = TRUE) + 0.1)
+        )
     )
     dev.off()
     print(paste0("Plotted: ", pcoi))

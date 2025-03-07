@@ -1,21 +1,20 @@
 # belongs to shs_downstream
 ppi_string <- function(query_list, mode, set, string_phys_confidence) {
   # # extract and safe experimental string
-  # string <- read.csv("~/PhD/local_resources/string/string_net_upsp.csv",  header = TRUE)  %>%
+  # string <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/string_net_upsp.csv",  header = TRUE)  %>%
   #   dplyr::select(protein1_entry, protein2_entry, protein1_entry_name, protein2_entry_name, reviewed_protein1, experimental, combined_score) %>%
   #   filter(reviewed_protein1 == "reviewed" & experimental > 0) %>%
   #   dplyr::select(-reviewed_protein1)
-  # write.csv(string, "~/PhD/local_resources/string/string_net_physicalMG_upsp.csv")
+  # write.csv(string, "/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_string_net_physicalMG_upsp.csv", row.names = FALSE)
   
   # load network - see above for how the table was created (TABLE IS UNFILTERED - CONFIDENCE FILTERING HAPPENS BELOW)
-  string_phys_ <- read_protti("~/PhD/local_resources/string/string_net_physicalMG_upsp.csv", head = TRUE) %>%
-    dplyr::select(-v1)
+  string_phys_ <- read_protti("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_string_net_physicalMG_upsp.csv", head = TRUE) 
   
   # define the stringency for physical interaction
   # not that this is a guesstimate of Martin based STRING recommendation to consider low / medium / high confidence (<0.4, >0.4, >0.7 combined_score)
   # summary(string_phys_$experimental)
-    # Min.    1st Qu.     Median         Mean     3rd Qu.        Max. 
-    # 42.0    >>71.0<<    >>100.0<<      152.1    >>166.0<<      999.0 
+  # Min.    1st Qu.     Median         Mean     3rd Qu.        Max. 
+  # 42.0    >>71.0<<    >>100.0<<      152.1    >>166.0<<      999.0 
   # ggplot(data = string_phys_, aes(x = "", y = experimental)) +
   #   geom_boxplot() +
   #   stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
@@ -30,29 +29,43 @@ ppi_string <- function(query_list, mode, set, string_phys_confidence) {
     string_phys_cutoff <- 310   # >= 166.0
   }
   
- # appy string confidence filtering
- string_phys <- string_phys_ %>%
+  # appy string confidence filtering
+  string_phys <- string_phys_ %>%
     filter(experimental >= string_phys_cutoff)
- paste0("Keeping ", round(nrow(string_phys)/nrow(string_phys_)*100,3), " % of string PPIs")
-
+  paste0("Keeping ", round(nrow(string_phys)/nrow(string_phys_)*100,3), " % of string PPIs")
+  
   # ensure to include A-B , B-A ppi relationship in string match frame (so no quer_list protein slips trough)
   string_phys <- string_phys %>%
+    # kick AB BA duplicates
+    mutate(AB = paste0(protein1_entry, protein2_entry),
+           BA = paste0(protein2_entry, protein1_entry)) %>%
+    distinct(AB, BA, .keep_all = TRUE) %>%
+    dplyr::select(-AB, -BA) %>%
+    # controlled introduction of AB BA
     mutate(dummy               = protein1_entry     , # store info
            dummy2              = protein1_entry_name, # store info
            protein1_entry      = protein2_entry     , # overwrite (swap info)
            protein1_entry_name = protein2_entry_name, # overwrite (swap info)
            protein2_entry      = dummy              , # overwrite (swap info)
            protein2_entry_name = dummy2) %>%          # overwrite (swap info)
-      dplyr::select(-dummy, -dummy2) %>%
-      rbind(string_phys) %>%             # append original matrix
-      distinct()   # make sure no duplications created
-     
+    dplyr::select(-dummy, -dummy2) %>%
+    rbind(string_phys) %>%             # append original matrix
+    distinct()   # make sure no duplications created
+  
+  # write.csv(string_phys %>%
+  #             dplyr::select(protein1_entry, protein2_entry, experimental, combined_score) %>%
+  #             arrange(desc(protein1_entry))%>%
+  #             rename("interactor_a" = "protein1_entry", "interactor_b" = "protein2_entry") %>%
+  #             mutate(interaction_identifiers  = paste0("string_", row_number())),
+  #           "/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_string_net_mediumconfidence_physicalMG_upsp20250306.csv", row.names = FALSE)
+  
   # determine the phyiscal node degree of all string nodes
   string_phys_degree_global <- string_phys %>%
-      group_by(protein1_entry) %>%
-      summarize(interactors_string_phys_global = paste(unique(protein2_entry), collapse = ", "))  %>%
-      mutate(node_degree_string_phys_global =  str_count(interactors_string_phys_global, ",") + 1)  # each connected protein separated by , --> number of connections = count of , +1 (last has no ,)
-    
+    group_by(protein1_entry) %>%
+    summarize(interactors_string_phys_global = paste(unique(protein2_entry), collapse = ", "))  %>%
+    mutate(node_degree_string_phys_global =  str_count(interactors_string_phys_global, ",") + 1)  # each connected protein separated by , --> number of connections = count of , +1 (last has no ,)
+  
+  
   # filter string for PPIs contained in query_list 
   string_phys_query_subset <- string_phys %>%
     mutate(ppi = rowSums(across(c(protein1_entry, protein2_entry), ~.x %in% query_list))) %>% #   0 neither, 1 one, 2 both interactors identified
@@ -99,26 +112,26 @@ ppi_string <- function(query_list, mode, set, string_phys_confidence) {
     labs(x = "Data Source", y = "Node Degree", title = "Boxplot of Node Degrees") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     coord_cartesian(clip = "off")
-
-    # geom_boxplot() +
-    # scale_fill_manual(values = c("query_subset_global" = "#74a9cf", 
-    #                              "query_subset_intern" = "#034e7b", 
-    #                              "global_string" = "#969696")) +
-    # stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
-    #              vjust = -0.5, color = "black", size = 5) +
-    # theme_minimal() +
-    # theme(
-    #   axis.title.x = element_text(size = 14),
-    #   axis.title.y = element_text(size = 14),
-    #   axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
-    #   axis.text.y = element_text(size = 12),
-    #   plot.title = element_text(size = 16),
-    #   legend.title = element_text(size = 14),
-    #   legend.text = element_text(size = 12),
-    #   legend.key.size = unit(1, "cm")
-    # ) +
-    # labs(x = "Data Source", y = "Node Degree", title = "Boxplot of Node Degrees") +
-    # theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  # geom_boxplot() +
+  # scale_fill_manual(values = c("query_subset_global" = "#74a9cf", 
+  #                              "query_subset_intern" = "#034e7b", 
+  #                              "global_string" = "#969696")) +
+  # stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+  #              vjust = -0.5, color = "black", size = 5) +
+  # theme_minimal() +
+  # theme(
+  #   axis.title.x = element_text(size = 14),
+  #   axis.title.y = element_text(size = 14),
+  #   axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+  #   axis.text.y = element_text(size = 12),
+  #   plot.title = element_text(size = 16),
+  #   legend.title = element_text(size = 14),
+  #   legend.text = element_text(size = 12),
+  #   legend.key.size = unit(1, "cm")
+  # ) +
+  # labs(x = "Data Source", y = "Node Degree", title = "Boxplot of Node Degrees") +
+  # theme(axis.text.x = element_text(angle = 45, hjust = 1))
   #  --------------------------------------------------------------------------------------------------------
   
   # trim df down to unique info

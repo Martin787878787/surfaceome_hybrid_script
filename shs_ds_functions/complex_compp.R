@@ -1,12 +1,15 @@
 # belongs to shs_downstream
 complex_compp <- function(query_list, set) {
   
-  complex_portal <- read_protti("/Users/mgesell/PhD/local_resources/PPIs_and_complexes/ComplexPortal_human9606_20250218.tsv")   %>%
-    filter(taxonomy_identifier == "9606") %>%
-    dplyr::select(number_complex_ac, recommended_name, description, identifiers_and_stoichiometry_of_molecules_in_complex, experimental_evidence, complex_assembly) %>%
-    mutate(complex_size = str_count(identifiers_and_stoichiometry_of_molecules_in_complex, "\\([0-9]+\\)"),   # each component marked by number which is given in () --> count "(..)" gives number components
-           complex_counter_cp = 0, # Initialize complex_counter_cp column in complex_portal with zeros
-           matches = "")        # Initialize matches column 
+  # complex_portal <- read_protti("/Users/mgesell/Desktop/currentR/git/shs_resources/resources_complex/ComplexPortal_human9606_20250218.tsv")   %>%
+  #   filter(taxonomy_identifier == "9606") %>%
+  #   dplyr::select(number_complex_ac, recommended_name, description, identifiers_and_stoichiometry_of_molecules_in_complex, experimental_evidence, complex_assembly) %>%
+  #   mutate(complex_size = str_count(identifiers_and_stoichiometry_of_molecules_in_complex, "\\([0-9]+\\)"),   # each component marked by number which is given in () --> count "(..)" gives number components
+  #          complex_counter_cp = 0, # Initialize complex_counter_cp column in complex_portal with zeros
+  #          matches = "")        # Initialize matches column 
+  # # write.csv(complex_portal, "/Users/mgesell/Desktop/currentR/git/shs_resources/resources_complex/_complex_portal_human_MG20250305.csv", row.names=FALSE)
+  complex_portal <- read_protti("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/biogrid/_biogrid_human_mg", head = TRUE) 
+  
   
   # Iterate through each entry in query_list
   for (entry in query_list) {
