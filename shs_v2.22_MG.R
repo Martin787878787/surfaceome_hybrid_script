@@ -18,7 +18,7 @@
 ####################################################################################################################################
 rm(list = ls())           # Purge workspace
 set.seed(123)
-script_version = "_shs2.21" # version stamp on output directory
+script_version = "_shs2.22" # version stamp on output directory
 # 2.7   2024-07-29    add lux signature filter + corrected signature filtering (before not effectively due to usage of wrong df ... - not bad because no glyco anlysed recently)
 # 2.8   2024-07-29    supervolcano - removal of missing degree of freedem middle plot (only required when non-limma t-test is used. limma now default >> kick out)
 # 2.9   2024-07-30    Surface and Intracellular replaced with yes and no; supervolcano - CV based unique hit scatters

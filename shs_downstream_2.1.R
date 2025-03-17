@@ -50,6 +50,8 @@ poi_list          = "LUX_targets.CPIs" # select one colnames(poi):
 string_network    = "uniprot_swissprot"
 #
 # directories
+
+directory_input_CSC_16 = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v16.2_CSC_deam_7aa__Jurkat-Tact_timecourse/_output_1-2_ludo_adjp_0.7string_shs2.22")
 # directory_input_CSC   = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v16.2_CSC_deam_7aa__Jurkat-Tact_timecourse/_output2025-01-30_1-2_ludo_adjp_0.7string_shs2.21")
 directory_input_CSC_31           = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_shs2.22")
 directory_input_CSC_31_meta      = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_meta_shs2.22")
@@ -66,6 +68,7 @@ if (!dir.exists( directory_output)) {  dir.create(directory_output)  }
 setwd(paste(directory_root))   
 #
 # condition_levels_CSC      = c("NAct", "Act_0", "Act_0_5h", "Act_1h", "Act_2h", "Act_4h", "Act_24h", "Act_72h") # experiment specific condition & order desired in plots (& dataframes)
+condition_levels_CSC_16 = c("NAct", "Act_0", "Act_0_5h" , "Act_1h",  "Act_2h",  "Act_4h",  "Act_24h",  "Act_72h")
 condition_levels_LUX_24         = c("TCR", "CD4", "CD8") # experiment specific condition & order desired in plots (& dataframes)
 condition_levels_LUX_24_all     = c("TCR", "CD4", "CD8", "Iso") # experiment specific condition & order desired in plots (& dataframes)
 #
@@ -121,6 +124,8 @@ proteome <- load_uniprot_and_annotate(proteome = read_protti("/Users/mgesell/PhD
 ##############################################################################################################################################################################################################################################################################################
 ## load data 
 # protein level data
+data_CSC_prot_v16         <-   load_protein_data(directory_input = directory_input_CSC_16                 , condition_levels = condition_levels_CSC_16)
+
 data_CSC_prot_v31         <-   load_protein_data(directory_input = directory_input_CSC_31                 , condition_levels = condition_levels_CSC_31)
 data_CSC_prot_v31_meta    <-   rbind(data_CSC_prot_v31,
                                      load_protein_data(directory_input = directory_input_CSC_31_meta      , condition_levels = condition_levels_CSC_31_meta) ) 
@@ -471,6 +476,50 @@ plots_cor <- lapply(group_filters, function(filter) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ===========================================================================================================================================================================
 # color palettes (define after imputation!)
 # colors_csc_zscore <- colorRamp2(c(NA_impute_CSC_zscore, max(data_CSC_prot_v31$log2_z_score, na.rm = TRUE)),
@@ -739,8 +788,8 @@ for (pcoi in pcoi_list) {
   }
 }
 # line plot for custom protein list --------------------------------------------------------
-protein_list <- poi_reference %>% filter(CPIs != "") %>% pull(CPIs)   # c("TVBL4", "SPRC", "TRBC2") # <<<< filter list
-data_CSC_median_ss <- data_CSC_prot_v31 %>%
+protein_list <- poi_reference %>% filter(Thermo_Marker_Tact != "") %>% pull(Thermo_Marker_Tact)   #   protein_list <-  c("CD69_HUMAN", "IL2RA_HUMAN") #
+data_CSC_median_ss <- data_CSC_prot_v16 %>% # data_CSC_prot_v16  data_CSC_prot_v31
   left_join(proteome %>% 
               dplyr::select(entry, entry_name), by = "entry") %>%
   filter(entry_name %in% protein_list) %>%
