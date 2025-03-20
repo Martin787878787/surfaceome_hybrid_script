@@ -13,13 +13,13 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_valu
     grouping_levels <- group_filter               # recycle group_filter as data levels if given
   }
   
-  # only terms that meat filter criteria in at least one condition shall be displayed in plot
-  if (is.null(min_p_value)) {
+  # only terms that meet filter criteria in at least one condition shall be displayed in plot
+  if (is.null(min_p_value)) { # in case no p_value cutoff is specified (for data types where no p-value was calculated e.g. complexes)
     terms_oi <- data %>%
       filter(!!sym(distance_column) >= min_recall) %>%
       pull(!!sym(term_column)) %>%
       unique()
-  } else {
+  } else { # if min_p_value specified use it for data filtering
     terms_oi <- data %>%
       filter(!!sym(distance_column)  >= min_recall & p_value <= min_p_value) %>%
       pull(!!sym(term_column)) %>%
@@ -29,14 +29,17 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_valu
   data <- data %>%
     filter(!!sym(term_column) %in% terms_oi)
   # in case one condition does not have any terms matching the filter conditions its lost 
-  # --> below recreate artifical data for that group so it is displayed in plot (recall = 0 sufficient to not see in plot but still be displayed on axis)
-  if(!is.null(setdiff(group_filter, unique(data %>% pull(!!sym(grouping))))) && 
-     length(setdiff(group_filter, unique(data[[grouping]]))) > 0   ) { 
-    data_dummy <- data %>%
-      mutate(!!sym(grouping)        := setdiff(group_filter, unique(data %>% pull(!!sym(grouping)))),
-             !!sym(distance_column) := 0) %>%
-      distinct()
-    data <- rbind(data, data_dummy) # append dummy rows 
+  # --> below recreate artificial data for that group so it is displayed in plot (recall = 0 sufficient to not see in plot but still be displayed on axis)
+  if (length(setdiff(group_filter, unique(data[[grouping]]))) > 0) {
+    missing_groups <- setdiff(group_filter, unique(data[[grouping]]))
+    
+    data_dummy <- tibble(
+      !!sym(grouping) := missing_groups,
+      !!sym(distance_column) := 0
+    )
+    
+    # Use bind_rows instead of rbind for safer tibble handling
+    data <- bind_rows(data, data_dummy)
   }
   ## distance calculation oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
   # brind df to wide format for distance calucation

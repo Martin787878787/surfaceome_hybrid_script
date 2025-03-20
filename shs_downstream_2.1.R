@@ -246,7 +246,8 @@ group_filters <- list( # Define different group filters
   c("overall", "metaTCR"),
   c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
   c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
-  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX")
+  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX"),
+  c("overall", "metaTCR", "CD4meta", "CD8meta"    , "nMeta"  , "nnMeta" , "nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8", "panT_TCRLUX",  "panT_CD4LUX", "panT_CD8LUX")
 )
 # Loop through group filters and create plots
 plots_go_LUX <- lapply(group_filters, function(filter) {
@@ -257,15 +258,22 @@ plots_go_LUX <- lapply(group_filters, function(filter) {
 })
 
 ## CSC  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-gost_overall_CSC        <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta                                                 %>% pull(entry)), set = "overall"            , max_term_size = 100)
-gost_nCD4_vs_nCD8       <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nCD8"  )      %>% pull(entry)), set = "nCD4_vs_nCD8"       , max_term_size = 100)
-gost_nCD4_vs_nnCD4      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4" )      %>% pull(entry)), set = "nCD4_vs_nnCD4"      , max_term_size = 100)
-gost_nnCD4_vs_nnCD8     <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8")      %>% pull(entry)), set = "nnCD4_vs_nnCD8"     , max_term_size = 100)
-gost_nCD8_vs_nnCD8      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8" )      %>% pull(entry)), set = "nCD8_vs_nnCD8"      , max_term_size = 100)
-gost_nMeta_vs_nnMeta      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta" )    %>% pull(entry)), set = "nMeta_vs_nnMeta"    , max_term_size = 100)
-gost_CD4meta_vs_CD8meta   <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta" ) %>% pull(entry)), set = "CD4meta_vs_CD8meta" , max_term_size = 100)
+gost_nCD4_vs_nCD8_upreg       <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nCD8"    , log2FC > 0)  %>% pull(entry)), set = "nCD4_vs_nCD8_+"       , max_term_size = 100)
+gost_nCD4_vs_nCD8_downreg     <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nCD8"    , log2FC < 0)  %>% pull(entry)), set = "nCD4_vs_nCD8_-"       , max_term_size = 100)
+gost_nCD4_vs_nnCD4_upreg      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4"   , log2FC > 0)  %>% pull(entry)), set = "nCD4_vs_nnCD4_+"      , max_term_size = 100)
+gost_nCD4_vs_nnCD4_downreg    <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4"   , log2FC < 0)  %>% pull(entry)), set = "nCD4_vs_nnCD4_-"      , max_term_size = 100)
+gost_nnCD4_vs_nnCD8_upreg     <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8"  , log2FC > 0)  %>% pull(entry)), set = "nnCD4_vs_nnCD8_+"     , max_term_size = 100)
+gost_nnCD4_vs_nnCD8_downreg   <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8"  , log2FC < 0)  %>% pull(entry)), set = "nnCD4_vs_nnCD8_-"     , max_term_size = 100)
+gost_nCD8_vs_nnCD8_upreg      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8"   , log2FC > 0)  %>% pull(entry)), set = "nCD8_vs_nnCD8_+"      , max_term_size = 100)
+gost_nCD8_vs_nnCD8_downreg    <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8"   , log2FC < 0)  %>% pull(entry)), set = "nCD8_vs_nnCD8_-"      , max_term_size = 100)
+gost_nMeta_vs_nnMeta_upreg      <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta"   , log2FC > 0) %>% pull(entry)), set = "n_vs_nn_+"    , max_term_size = 100)
+gost_nMeta_vs_nnMeta_downreg    <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta"   , log2FC < 0) %>% pull(entry)), set = "n_vs_nn_-"    , max_term_size = 100)
+gost_CD4meta_vs_CD8meta_upreg   <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta", log2FC > 0) %>% pull(entry)), set = "CD4_vs_CD8_+" , max_term_size = 100)
+gost_CD4meta_vs_CD8meta_downreg <- go_gost(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta", log2FC < 0) %>% pull(entry)), set = "CD4_vs_CD8_-" , max_term_size = 100)
 # combine GO sets to one long df
-gost_CSC <- rbind(gost_overall_CSC, gost_nCD4_vs_nCD8, gost_nCD4_vs_nnCD4, gost_nnCD4_vs_nnCD8, gost_nCD8_vs_nnCD8, gost_nMeta_vs_nnMeta, gost_CD4meta_vs_CD8meta) %>%
+gost_CSC <- rbind(gost_nCD4_vs_nCD8_upreg, gost_nCD4_vs_nCD8_downreg, gost_nCD4_vs_nnCD4_upreg, gost_nCD4_vs_nnCD4_downreg, gost_nnCD4_vs_nnCD8_upreg, gost_nnCD4_vs_nnCD8_downreg, 
+                  gost_nCD8_vs_nnCD8_upreg, gost_nCD8_vs_nnCD8_downreg, gost_nMeta_vs_nnMeta_upreg, gost_nMeta_vs_nnMeta_downreg, gost_CD4meta_vs_CD8meta_upreg, gost_CD4meta_vs_CD8meta_downreg
+                  ) %>%
   group_by(term_name) %>%
   mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
   ungroup()
@@ -277,9 +285,9 @@ common_params <- list( # Define common plot parameters
 )
 group_filters <- list( # Define different group filters
   NULL,
-  c("overall"),
-  c("CD4meta_vs_CD8meta", "nMeta_vs_nnMeta"),
-  c("nCD4_vs_nnCD4"     , "nCD8_vs_nnCD8", "nCD4_vs_nCD8", "nnCD4_vs_nnCD8")
+  c( "n_vs_nn_-", "n_vs_nn_+", "CD4_vs_CD8_-", "CD4_vs_CD8_+"),
+  c("nCD4_vs_nCD8_-", "nCD4_vs_nCD8_+", "nCD4_vs_nnCD4_-", "nCD4_vs_nnCD4_+", "nnCD4_vs_nnCD8_-", "nnCD4_vs_nnCD8_+", "nCD8_vs_nnCD8_-", "nCD8_vs_nnCD8_+"),
+  c("n_vs_nn_-", "n_vs_nn_+", "CD4_vs_CD8_-", "CD4_vs_CD8_+", "nCD4_vs_nCD8_-", "nCD4_vs_nCD8_+", "nCD4_vs_nnCD4_-", "nCD4_vs_nnCD4_+", "nnCD4_vs_nnCD8_-", "nnCD4_vs_nnCD8_+", "nCD8_vs_nnCD8_-", "nCD8_vs_nnCD8_+")
 )
 # Loop through group filters and create plots
 plots_go_CSC <- lapply(group_filters, function(filter) {
@@ -409,7 +417,8 @@ group_filters <- list( # Define different group filters
   c("overall", "metaTCR"),
   c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
   c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
-  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX")
+  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX"),
+  c("overall", "metaTCR", "CD4meta", "CD8meta"    , "nMeta"  , "nnMeta" , "nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8", "panT_TCRLUX",  "panT_CD4LUX", "panT_CD8LUX")
 )
 plots_cp <- lapply(group_filters, function(filter) { # Loop through group filters and create plots
   plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
@@ -451,7 +460,8 @@ group_filters <- list( # Define different group filters
   c("overall", "metaTCR"),
   c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
   c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
-  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX")
+  c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX"),
+  c("overall", "metaTCR", "CD4meta", "CD8meta"    , "nMeta"  , "nnMeta" , "nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8", "panT_TCRLUX",  "panT_CD4LUX", "panT_CD8LUX")
 )
 # Loop through group filters and create plots
 plots_cor <- lapply(group_filters, function(filter) {
@@ -788,7 +798,9 @@ for (pcoi in pcoi_list) {
   }
 }
 # line plot for custom protein list --------------------------------------------------------
-protein_list <- poi_reference %>% filter(Thermo_Marker_Tact != "") %>% pull(Thermo_Marker_Tact)   #   protein_list <-  c("CD69_HUMAN", "IL2RA_HUMAN") #
+# protein_list <- c("CD69_HUMAN", "PTPRC_HUMAN", "TRAC_HUMAN", "TRBC2_HUMAN", "CD28_HUMAN", "VISTA_HUMAN", "PDCD1_HUMAN")
+# protein_list <- poi_reference %>% filter(FACS_candidates != "") %>% pull(FACS_candidates)   #   protein_list <-  c("CD69_HUMAN", "IL2RA_HUMAN") #   LUX_targets.CPIs
+protein_list <- poi_reference %>% filter(tcr_chains_cd3_mgmanual != "") %>% pull(tcr_chains_cd3_mgmanual)   #   protein_list <-  c("CD69_HUMAN", "IL2RA_HUMAN") #   LUX_targets.CPIs
 data_CSC_median_ss <- data_CSC_prot_v16 %>% # data_CSC_prot_v16  data_CSC_prot_v31
   left_join(proteome %>% 
               dplyr::select(entry, entry_name), by = "entry") %>%
