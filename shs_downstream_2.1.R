@@ -120,6 +120,35 @@ unloadNamespace("biomaRt")
 ## proteome file loaded and pcois annotated
 proteome <- load_uniprot_and_annotate(proteome = read_protti("/Users/mgesell/PhD/local_resources/human_upsp_202501.csv"  , header = TRUE, sep = ","))
 
+################################################################################################################################################
+# set plot theme for script (from Amanda K)
+# my plot theme to fit most journal figure requirements:
+# black axis ticks and borders;   
+# 5-7pt or 6-8pt text for a 2-panel figure    
+# Line width 0.5-1.5 pt
+# Colour blind friendly colour scheme (would recommend defining colours in source functions and use throughout) e.g. no red and green used together
+# Gray fills between 10-80%
+# Figure resolution at least 300 dpi ( I like to export in pdf not svg or tiff if using ggsave so figure is small and vectorized)
+plot_theme <- function() {
+  theme_classic() %+replace%
+    theme(
+      axis.text    = element_text(size = 16, face = "plain"),
+      axis.text.x  = element_text(),
+      axis.title   = element_text(size = 16, face = "bold"),
+      axis.title.x = element_text(),
+      title        = element_text(size = 16, face = "plain"),
+      strip.text.x = element_text(size = 16),
+      strip.text.y = element_text(size = 16),
+      legend.text  = element_text(size = 16),
+      legend.title = element_text(size = 16, face = "bold"),
+      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+      plot.margin  = unit(c(t = 1, r = 1, b = 0.1, l = 1), "cm")
+    )
+}
+theme_set(plot_theme()) # all plots generated from this script thosuld have same theme now 
+#
+#
+#
 ##############################################################################################################################################################################################################################################################################################
 ##############################################################################################################################################################################################################################################################################################
 ## load data 
@@ -152,32 +181,6 @@ data_LUX_prot_diff_v24_v31_total  <- rbind(data_LUX_prot_diff_v24,
                                            data_LUX_prot_diff_v31_meta_full)
 
 
-################################################################################################################################################
-# set plot theme for script (from Amanda K)
-# my plot theme to fit most journal figure requirements:
-# black axis ticks and borders;   
-# 5-7pt or 6-8pt text for a 2-panel figure    
-# Line width 0.5-1.5 pt
-# Colour blind friendly colour scheme (would recommend defining colours in source functions and use throughout) e.g. no red and green used together
-# Gray fills between 10-80%
-# Figure resolution at least 300 dpi ( I like to export in pdf not svg or tiff if using ggsave so figure is small and vectorized)
-plot_theme <- function() {
-  theme_classic() %+replace%
-    theme(
-      axis.text    = element_text(size = 16, face = "plain"),
-      axis.text.x  = element_text(),
-      axis.title   = element_text(size = 16, face = "bold"),
-      axis.title.x = element_text(),
-      title        = element_text(size = 16, face = "plain"),
-      strip.text.x = element_text(size = 16),
-      strip.text.y = element_text(size = 16),
-      legend.text  = element_text(size = 16),
-      legend.title = element_text(size = 16, face = "bold"),
-      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
-      plot.margin  = unit(c(t = 1, r = 1, b = 0.1, l = 1), "cm")
-    )
-}
-theme_set(plot_theme()) # all plots generated from this script thosuld have same theme now 
 
 sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
 ###################################################################################################################################################################################################################################################################################################
@@ -246,6 +249,7 @@ group_filters <- list( # Define different group filters
   c("overall", "metaTCR"),
   c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
   c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
+  c("panT_TCRLUX", "panT_CD4LUX", "panT_CD8LUX"),
   c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX"),
   c("overall", "metaTCR", "CD4meta", "CD8meta"    , "nMeta"  , "nnMeta" , "nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8", "panT_TCRLUX",  "panT_CD4LUX", "panT_CD8LUX")
 )
@@ -417,6 +421,7 @@ group_filters <- list( # Define different group filters
   c("overall", "metaTCR"),
   c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
   c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
+  c("panT_TCRLUX", "panT_CD4LUX", "panT_CD8LUX"),
   c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX"),
   c("overall", "metaTCR", "CD4meta", "CD8meta"    , "nMeta"  , "nnMeta" , "nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8", "panT_TCRLUX",  "panT_CD4LUX", "panT_CD8LUX")
 )
@@ -460,6 +465,7 @@ group_filters <- list( # Define different group filters
   c("overall", "metaTCR"),
   c("nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8"),
   c("CD4meta", "CD8meta"    , "nMeta"  , "nnMeta"     , "metaTCR"),
+  c("panT_TCRLUX", "panT_CD4LUX", "panT_CD8LUX"),
   c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX"),
   c("overall", "metaTCR", "CD4meta", "CD8meta"    , "nMeta"  , "nnMeta" , "nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8", "panT_TCRLUX",  "panT_CD4LUX", "panT_CD8LUX")
 )

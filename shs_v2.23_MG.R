@@ -18,7 +18,7 @@
 ####################################################################################################################################
 rm(list = ls())           # Purge workspace
 set.seed(123)
-script_version = "_shs2.22" # version stamp on output directory
+script_version = "_shs2.23" # version stamp on output directory
 # 2.7   2024-07-29    add lux signature filter + corrected signature filtering (before not effectively due to usage of wrong df ... - not bad because no glyco anlysed recently)
 # 2.8   2024-07-29    supervolcano - removal of missing degree of freedem middle plot (only required when non-limma t-test is used. limma now default >> kick out)
 # 2.9   2024-07-30    Surface and Intracellular replaced with yes and no; supervolcano - CV based unique hit scatters
@@ -36,6 +36,7 @@ script_version = "_shs2.22" # version stamp on output directory
 # 2.20  2024-12-11    poi loop for multiple static volcanos. GO correction & refinement
 # 2.21  2025-01-29    fix double labeling of datapoints. fix inf douple occurence of proteins (same proteins 2x with different CVs ...)
 # 2.22  2025-02-24    unique hit imputation update
+# 2.23  2025-03-20    CSPA_2.0 reintroduced and adjusted Marcos code as well as QCs (impact on CSPA reference for QC plots and in case of peptideCSC on continous updating of CSPA_2.0_*cell_type*.csv)
 
 #Load libraries required ----------------------------------------------------------------------------------------------------------
 library(dplyr)      # Data wrangling
@@ -116,9 +117,9 @@ string_linkage_categs = c("experimental", "database", "fusion", "neighborhood", 
 string_min_comb_score = 700 # string combined score ranges 0-1000; 400 threshold for medium confidence, 700 for high confidence;    low throughput high accuracy experiment data results score usually +/- 600; high throughput low accuracy data scores <= 250
 string_network        = "uniprot_swissprot"   # select uniprot_unreviewed (default*) or uniprot_swissprot           *data searched for upsp >> will only look at upsp protein1 anyhow. any non-upsp network info (protein2)  might be helpfull for further analysis so keep itin
 if (string_network == "uniprot_unreviewed") {  # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  string <- read.csv("~/PhD/local_resources/string/string_net_unrev.csv", header = TRUE)  # or /Volumes/mgesell/03_DataProcessing/_resources/string/string_net_unrev.csv
+  string <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/string_net_unrev.csv", header = TRUE)  # or /Volumes/mgesell/03_DataProcessing/_resources/string/string_net_unrev.csv
 } else if (string_network == "uniprot_swissprot") {
-  string <- read.csv("~/PhD/local_resources/string/string_net_upsp.csv",  header = TRUE)  # or /Volumes/mgesell/03_DataProcessing/_resources/string/string_net_upsp.csv
+  string <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/string_net_upsp.csv",  header = TRUE)  # or /Volumes/mgesell/03_DataProcessing/_resources/string/string_net_upsp.csv
 }
 # string interaction filter
 string_filter <- string_targets %>% # reduce string to string interactor rows (otherwise huge dataframe occupying global environment)
@@ -205,14 +206,14 @@ if (paste(experiment_type) == "Lysate_ProtCSC_LUX_LUXCSC") {   # for LUX use 2-0
 }
 
 # CSPA2.0 - add whatever celline you like by just copying panT file (whole human upsp proteins) inserting a dummy column with only 0. call file *cell_type*_CSPA.csv. set cell_type = *your cell type* on top
-glyco_standard_directory  = "/Volumes/mgesell/03_DataProcessing/3_PBMCs/cell_specific_CSPA"    # or c("/Volumes/mgesell/03_DataProcessing/3_PBMCs/primaryT8_CSPA")
-cell_specific_CSPA        = read.csv(paste0(glyco_standard_directory, "/", cell_type, "_CSPA.csv"), row.names = 1)     # Load "own" CSPA from standard directory
+glyco_standard_directory  = "/Users/mgesell/Desktop/currentR/git/shs_resources/CSPA_2.0"    # or c("/Volumes/mgesell/03_DataProcessing/3_PBMCs/primaryT8_CSPA")
+cell_specific_CSPA        = read_protti(paste0(glyco_standard_directory, "/", cell_type, "_CSPA.csv")              , header = TRUE, sep = ",")  # Load "own" CSPA from standard directory
 #
-poi_table                 = read.csv("/Volumes/mgesell/03_DataProcessing/_resources/POI_lists/POI_lists.csv", header = TRUE, sep = ",") 
+poi_table                 = read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/POI_lists/POI_lists.csv" , header = TRUE, sep = ",") 
 # Load annotation files 
-surface_annotations       = read_protti("/Volumes/mgesell/03_DataProcessing/_resources/surface.annotations.csv", header = TRUE, sep = ",")
-proteome                  = read_protti("/Users/mgesell/PhD/local_resources/human_upsp_202501.csv"  , header = TRUE, sep = ",")
-CSPA                      = read.csv("/Volumes/mgesell/03_DataProcessing/_resources/CSPA_per_cell_type.csv"    , header = TRUE, sep = ",")
+surface_annotations       = read_protti("/Users/mgesell/Desktop/currentR/git/shs_resources/surface.annotations.csv", header = TRUE, sep = ",")
+proteome                  = read_protti("/Users/mgesell/Desktop/currentR/git/shs_resources/human_upsp_202501.csv"  , header = TRUE, sep = ",")
+CSPA                      =    read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/CSPA_per_cell_type.csv" , header = TRUE, sep = ",")
 # reminder how large sets are
 cat(paste("# Uniprot Surface: ", length(surface_annotations[!is.na(surface_annotations$uniprot_2023),]$uniprot_2023), " = " ,  round(length(surface_annotations[!is.na(surface_annotations$uniprot_2023),]$uniprot_2023)/length(proteome$entry)*100, 1), " % of total proteome",  sep = " "),
     paste("# CD Proteins:     ", length(surface_annotations[!is.na(surface_annotations$cd_antigen),]$cd_antigen)    , " = " ,  round(length(surface_annotations[!is.na(surface_annotations$cd_antigen),]$cd_antigen)/length(proteome$entry)*100, 1)    , "  % of total proteome",  sep = " "),
@@ -589,9 +590,8 @@ qc_plot_surface_9 <- data_raw_up_surf_gly_nZ[data_raw_up_surf_gly_nZ$plot_signat
   theme(text = element_text(size =20), axis.text.x = element_text(hjust = 1, angle = 45))
 ## Match CSPA with runs
 # Extract CSPA Proteins for the given cell type
-expected_proteins <- cbind(CSPA[,c(2,4)], CSPA[[cell_type]])
-colnames(expected_proteins)[3] <- cell_type
-colnames(expected_proteins)[1] <- "entry"
+expected_proteins <- cbind(cell_specific_CSPA[,c(1,5)])
+colnames(expected_proteins)[2] <- cell_type
 expected_proteins <- expected_proteins[expected_proteins[[cell_type]]==1,]
 # Initialize fraction vector
 data_reps <- data_raw_up_surf_gly_nZ
@@ -659,10 +659,11 @@ cat("Will use",sum(includeFeature),"out of",nrow(data_raw_pre_filtered),"feature
 data_raw_pre_filtered <- data_raw_pre_filtered[includeFeature, ] %>%
   dplyr::select(-PSM_id)
 ## END data pre-filtering __________________________________________________________________________________________________________________________________________
-#
+
 ## clean up dataframe
 data_raw_pre_filtered <- data_raw_pre_filtered %>% dplyr::select( -sequence_extended, -sequence_veneer)
-## CSPA_2.0 thanks Marco Baumann for implementation! __________________________________________________________________________________________________________________________________________
+
+## CSPA_2.0 thanks Marco & Martin __________________________________________________________________________________________________________________________________________
 if (experiment_type == "peptideCSC") { 
   # Extracting per condition the Glyco PGs and merging with Jurkat CSPA (needs to be refined, maybe only do after MSstats to get more confident identifications)
   # Separate the conditions
@@ -682,7 +683,7 @@ if (experiment_type == "peptideCSC") {
     # Create named vector
     assign(condition_name, row_sums)
     
-    # Search Jurkat CSPA frame for column with matching sample time and cell state, if it does not exist yet, create it
+    # Search cell_specific_CSPA frame for column with matching sample time and cell state, if it does not exist yet, create it
     if (!(cond %in% names(cell_specific_CSPA))) {
       # If the column doesn't exist, create it as an empty column 
       cell_specific_CSPA[[cond]] <- 0
@@ -696,25 +697,32 @@ if (experiment_type == "peptideCSC") {
     print(paste(length(get(condition_name)[evidence_filter]), "Glyco PGs passed evidence treshhold out of", length(get(condition_name)), "in condition", cond, sep = " "))
     for (prot in names(get(condition_name)[evidence_filter])) {
       
-      if (!(prot %in% cell_specific_CSPA$UniprotID)) {
+      if (!(prot %in% cell_specific_CSPA$entry)) {
         # If the row doesn't exist, create it as an empty row 
         cell_specific_CSPA <- rbind(cell_specific_CSPA, c(prot, rep(0, times=ncol(cell_specific_CSPA)-1)))
         cell_specific_CSPA[, 2:ncol(cell_specific_CSPA)] <- lapply(cell_specific_CSPA[, 2:ncol(cell_specific_CSPA)], as.numeric) # has to be there for the moment
         # print(paste(prot, "was not yet present, the corresponding entry was created now with condition", cond, sep = " "))
         addition_counter <- addition_counter + 1
       }
-      matching_row <- which(cell_specific_CSPA$UniprotID == prot)
+      matching_row <- which(cell_specific_CSPA$entry == prot)
       cell_specific_CSPA[matching_row, matching_cell_state] <- cell_specific_CSPA[matching_row, matching_cell_state] + 1
     }
     cell_specific_CSPA[[cond]][1] <- cell_specific_CSPA[[cond]][1] + 1
     print(paste(addition_counter, "new proteins were added to CSPA with", cond, sep = " "))
     
+    # column 5 must be CSPA_2.0_*cell_type* (fyi col 6 = CSPA_1.0_*cell_type* (make all 0 if not in CSPA 1.0), col 7 = CSPA_1.0 (full)
+    cell_specific_CSPA <- cell_specific_CSPA %>%
+      mutate(across(5, ~ {
+        sum_vals <- rowSums(cbind(cur_data()[6], cur_data()[8:ncol(cur_data())]), na.rm = TRUE)  # exclude column 7 which is entire CSPA_1.0
+        ifelse(sum_vals > 0, 1, sum_vals)
+      }))
+    
   }
   # Finally save the Jurkat CSPA again in the directory it is situated in
   if (dry_run != T) {
-    print("Updated *cell type* CSPA will be saved ...")
+    print("Updated Jurkat CSPA will be saved...")
     setwd(paste(glyco_standard_directory))
-    write.csv(cell_specific_CSPA, file=paste0(cell_type, "_CSPA.csv") )
+    write.csv(cell_specific_CSPA, file=paste0(cell_type, "_CSPA.csv"), row.names = FALSE) 
     setwd(paste(output_directory))  
   } else {
     print("Jurkat CSPA was not updated, change Dry_run parameter if this was no test run")
