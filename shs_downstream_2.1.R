@@ -53,8 +53,8 @@ string_network    = "uniprot_swissprot"
 
 directory_input_CSC_16 = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v16.2_CSC_deam_7aa__Jurkat-Tact_timecourse/_output_1-2_ludo_adjp_0.7string_shs2.22")
 # directory_input_CSC   = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v16.2_CSC_deam_7aa__Jurkat-Tact_timecourse/_output2025-01-30_1-2_ludo_adjp_0.7string_shs2.21")
-directory_input_CSC_31           = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_shs2.22")
-directory_input_CSC_31_meta      = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_meta_shs2.22")
+directory_input_CSC_31           = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_exclude_nCD4-2_nCD8-2_shs2.23")
+directory_input_CSC_31_meta      = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_meta_exclude_nCD4-2_nCD8-2_shs2.23")
 # directory_input_LUX   = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.21")
 directory_input_LUX_31           = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_uniqueImpute_shs2.22")
 directory_input_LUX_31_meta      = c("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_meta_uniqueImpute_shs2.22")
@@ -241,7 +241,7 @@ gost_LUX <- rbind(gost_overall_LUX, gost_nCD4, gost_nnCD4, gost_nCD8, gost_nnCD8
   ungroup()
 # plotting ------
 common_params <- list( # Define common plot parameters
-  data = gost_LUX,  min_recall = 0.5,    min_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+  data = gost_LUX,  min_recall = 1,    min_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
   x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    title_var = "GO Term Enrichment" # plot parameters
 )
 group_filters <- list( # Define different group filters
@@ -284,7 +284,7 @@ gost_CSC <- rbind(gost_nCD4_vs_nCD8_upreg, gost_nCD4_vs_nCD8_downreg, gost_nCD4_
 # plotting ------
 common_params <- list( # Define common plot parameters
   data = gost_CSC,
-  min_recall = 0.5,  min_p_value = 0.05,  grouping = "comparison",  term_column = "term_name", distance_column = "recall",  distance_method = "euclidean", # distance parameters
+  min_recall = 1,  min_p_value = 0.05,  grouping = "comparison",  term_column = "term_name", distance_column = "recall",  distance_method = "euclidean", # distance parameters
   x_var = "comparison",  y_var = "term_name",  size_var = "recall",  fill_var = "p_value",  title_var = "GO Term Enrichment"                               # distance parameters
 )
 group_filters <- list( # Define different group filters
@@ -341,7 +341,7 @@ ppi_bg %>%
   labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "BioGrid: Query Internal Degree") +
   stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
                hjust = 0, vjust = -0.5, color = "black", size = 5) 
-# not sure how to continue analysis from there
+# not sure yet what to do with PPI info *o*
 # ???
 
 # string PPIs -----------------------------------------------------------------------------------
@@ -381,6 +381,7 @@ ppi_str %>%
   labs(x = "Comparison", y = "Node Degree (STRING)", title = "STRING: Query Internal Physical Degree") +# not sure how to continue analysis from there
   stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
                hjust = 0, vjust = -0.5, color = "black", size = 5) 
+# not sure yet what to do with PPI info *o*
 # ???
 ## PPIs end _____________________________________________________________________________________________________________________________________________________________________
 
@@ -413,7 +414,7 @@ comp_cp_LUX <- rbind(comp_cp_overall_LUX, comp_cp_nCD4, comp_cp_nnCD4, comp_cp_n
   arrange(desc(complex_recall_cp))
 # plotting Complex Portal ------
 common_params <- list( # Define common plot parameters
-  data = comp_cp_LUX,  min_recall = 0.5,    min_p_value = NULL,    grouping = "comparison",    term_column = "recommended_name",    distance_column = "complex_recall_cp",    distance_method = "euclidean", # distance parameters
+  data = comp_cp_LUX,  min_recall = 1,    min_p_value = NULL,    grouping = "comparison",    term_column = "recommended_name",    distance_column = "complex_recall_cp",    distance_method = "euclidean", # distance parameters
   x_var = "comparison",    y_var = "recommended_name",    size_var = "complex_recall_cp",  fill_var = NULL,    title_var = "Complex Portal" # plot parameters
 )
 group_filters <- list( # Define different group filters
@@ -425,12 +426,53 @@ group_filters <- list( # Define different group filters
   c("metaTCR", "panT_TCRLUX", "CD4meta", "panT_CD4LUX", "CD8meta", "panT_CD8LUX"),
   c("overall", "metaTCR", "CD4meta", "CD8meta"    , "nMeta"  , "nnMeta" , "nCD4"   , "nnCD4"      , "nCD8"   , "nnCD8", "panT_TCRLUX",  "panT_CD4LUX", "panT_CD8LUX")
 )
-plots_cp <- lapply(group_filters, function(filter) { # Loop through group filters and create plots
+plots_cp_LUX <- lapply(group_filters, function(filter) { # Loop through group filters and create plots
   plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
   if (is.null(filter)) {     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))   }   # Add custom theme for NULL filter
   print(plot) # Display the plot in RStudio's Plots window
   return(plot) # Store the plot in a list for further use
 })
+
+## CSC  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+comp_cp_nCD4_vs_nCD8_upreg       <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nCD8"    , log2FC > 0)  %>% pull(entry)), set = "nCD4_vs_nCD8_+"  )
+comp_cp_nCD4_vs_nCD8_downreg     <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nCD8"    , log2FC < 0)  %>% pull(entry)), set = "nCD4_vs_nCD8_-"  )
+comp_cp_nCD4_vs_nnCD4_upreg      <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4"   , log2FC > 0)  %>% pull(entry)), set = "nCD4_vs_nnCD4_+" )
+comp_cp_nCD4_vs_nnCD4_downreg    <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4"   , log2FC < 0)  %>% pull(entry)), set = "nCD4_vs_nnCD4_-" )
+comp_cp_nnCD4_vs_nnCD8_upreg     <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8"  , log2FC > 0)  %>% pull(entry)), set = "nnCD4_vs_nnCD8_+")
+comp_cp_nnCD4_vs_nnCD8_downreg   <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8"  , log2FC < 0)  %>% pull(entry)), set = "nnCD4_vs_nnCD8_-")
+comp_cp_nCD8_vs_nnCD8_upreg      <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8"   , log2FC > 0)  %>% pull(entry)), set = "nCD8_vs_nnCD8_+" )
+comp_cp_nCD8_vs_nnCD8_downreg    <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8"   , log2FC < 0)  %>% pull(entry)), set = "nCD8_vs_nnCD8_-" )
+comp_cp_nMeta_vs_nnMeta_upreg      <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta"   , log2FC > 0) %>% pull(entry)), set = "n_vs_nn_+"    )
+comp_cp_nMeta_vs_nnMeta_downreg    <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta"   , log2FC < 0) %>% pull(entry)), set = "n_vs_nn_-"    )
+comp_cp_CD4meta_vs_CD8meta_upreg   <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta", log2FC > 0) %>% pull(entry)), set = "CD4_vs_CD8_+" )
+comp_cp_CD4meta_vs_CD8meta_downreg <- complex_compp(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta", log2FC < 0) %>% pull(entry)), set = "CD4_vs_CD8_-" )
+# combine GO sets to one long df
+comp_cp_CSC <- rbind(comp_cp_nCD4_vs_nCD8_upreg, comp_cp_nCD4_vs_nCD8_downreg, comp_cp_nCD4_vs_nnCD4_upreg, comp_cp_nCD4_vs_nnCD4_downreg, comp_cp_nnCD4_vs_nnCD8_upreg, comp_cp_nnCD4_vs_nnCD8_downreg, 
+                  comp_cp_nCD8_vs_nnCD8_upreg, comp_cp_nCD8_vs_nnCD8_downreg, comp_cp_nMeta_vs_nnMeta_upreg, comp_cp_nMeta_vs_nnMeta_downreg, comp_cp_CD4meta_vs_CD8meta_upreg, comp_cp_CD4meta_vs_CD8meta_downreg
+) %>%
+  group_by(complex_name_cp) %>%
+  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
+  ungroup() %>%
+  arrange(desc(complex_recall_cp))
+# plotting ------
+common_params <- list( # Define common plot parameters
+  data = comp_cp_CSC,  min_recall = 0.66,    min_p_value = NULL,    grouping = "comparison",    term_column = "recommended_name",    distance_column = "complex_recall_cp",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "recommended_name",    size_var = "complex_recall_cp",  fill_var = NULL,    title_var = "Complex Portal" # plot parameters
+)
+group_filters <- list( # Define different group filters
+  NULL,
+  c( "n_vs_nn_-", "n_vs_nn_+", "CD4_vs_CD8_-", "CD4_vs_CD8_+"),
+  c("nCD4_vs_nCD8_-", "nCD4_vs_nCD8_+", "nCD4_vs_nnCD4_-", "nCD4_vs_nnCD4_+", "nnCD4_vs_nnCD8_-", "nnCD4_vs_nnCD8_+", "nCD8_vs_nnCD8_-", "nCD8_vs_nnCD8_+"),
+  c("n_vs_nn_-", "n_vs_nn_+", "CD4_vs_CD8_-", "CD4_vs_CD8_+", "nCD4_vs_nCD8_-", "nCD4_vs_nCD8_+", "nCD4_vs_nnCD4_-", "nCD4_vs_nnCD4_+", "nnCD4_vs_nnCD8_-", "nnCD4_vs_nnCD8_+", "nCD8_vs_nnCD8_-", "nCD8_vs_nnCD8_+")
+)
+# Loop through group filters and create plots
+plots_cp_CSC <- lapply(group_filters, function(filter) {
+  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+  if (is.null(filter)) { plot <- plot + theme(axis.text.x = element_text(angle = 25, hjust = 1))  }
+  print(plot)
+  return(plot)
+})
+
 
 # corum complexes --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 comp_corum_overall_LUX <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v31_meta_full                                                      %>% pull(entry)) ), set = "overall")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
@@ -447,7 +489,7 @@ comp_corum_panT_TCRLUX  <- complex_corum(query_list = sort(unique(data_LUX_prot_
 comp_corum_panT_CD4LUX  <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)) ), set = "panT_CD4LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
 comp_corum_panT_CD8LUX  <- complex_corum(query_list = sort(unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)) ), set = "panT_CD8LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
 # merge df
-comp_cor <- rbind(comp_corum_overall_LUX, comp_corum_nCD4, comp_corum_nnCD4, comp_corum_nCD8, comp_corum_nnCD8, 
+comp_cor_LUX <- rbind(comp_corum_overall_LUX, comp_corum_nCD4, comp_corum_nnCD4, comp_corum_nCD8, comp_corum_nnCD8, 
                   comp_corum_nMeta, comp_corum_nnMeta, comp_corum_CD4meta, comp_corum_CD8meta, comp_corum_metaTCR,
                   comp_corum_panT_TCRLUX, comp_corum_panT_CD4LUX, comp_corum_panT_CD8LUX) %>%
   group_by(complex_name_cor) %>%
@@ -457,7 +499,7 @@ comp_cor <- rbind(comp_corum_overall_LUX, comp_corum_nCD4, comp_corum_nnCD4, com
 
 # plotting Corum Complexes ------
 common_params <- list( # Define common plot parameters
-  data = comp_cor,  min_recall = 0.5,    min_p_value = NULL,    grouping = "comparison",    term_column = "complex_name_cor",    distance_column = "complex_recall_cor",    distance_method = "euclidean", # distance parameters
+  data = comp_cor_LUX,  min_recall = 1,    min_p_value = NULL,    grouping = "comparison",    term_column = "complex_name_cor",    distance_column = "complex_recall_cor",    distance_method = "euclidean", # distance parameters
   x_var = "comparison",    y_var = "complex_name_cor",    size_var = "complex_recall_cor",    fill_var = NULL,    title_var = "Corum Complexes" # plot parameters
 )
 group_filters <- list( # Define different group filters
@@ -478,54 +520,47 @@ plots_cor <- lapply(group_filters, function(filter) {
   return(plot) # Store the plot in a list for further use
 })
 
+## CSC  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+comp_corum_nCD4_vs_nCD8_upreg       <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nCD8"    , log2FC > 0)  %>% pull(entry)), set = "nCD4_vs_nCD8_+"  )
+comp_corum_nCD4_vs_nCD8_downreg     <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nCD8"    , log2FC < 0)  %>% pull(entry)), set = "nCD4_vs_nCD8_-"  )
+comp_corum_nCD4_vs_nnCD4_upreg      <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4"   , log2FC > 0)  %>% pull(entry)), set = "nCD4_vs_nnCD4_+" )
+comp_corum_nCD4_vs_nnCD4_downreg    <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD4_vs_nnCD4"   , log2FC < 0)  %>% pull(entry)), set = "nCD4_vs_nnCD4_-" )
+comp_corum_nnCD4_vs_nnCD8_upreg     <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8"  , log2FC > 0)  %>% pull(entry)), set = "nnCD4_vs_nnCD8_+")
+comp_corum_nnCD4_vs_nnCD8_downreg   <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nnCD4_vs_nnCD8"  , log2FC < 0)  %>% pull(entry)), set = "nnCD4_vs_nnCD8_-")
+comp_corum_nCD8_vs_nnCD8_upreg      <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8"   , log2FC > 0)  %>% pull(entry)), set = "nCD8_vs_nnCD8_+" )
+comp_corum_nCD8_vs_nnCD8_downreg    <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nCD8_vs_nnCD8"   , log2FC < 0)  %>% pull(entry)), set = "nCD8_vs_nnCD8_-" )
+comp_corum_nMeta_vs_nnMeta_upreg      <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta"   , log2FC > 0) %>% pull(entry)), set = "n_vs_nn_+"    )
+comp_corum_nMeta_vs_nnMeta_downreg    <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "nMeta_vs_nnMeta"   , log2FC < 0) %>% pull(entry)), set = "n_vs_nn_-"    )
+comp_corum_CD4meta_vs_CD8meta_upreg   <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta", log2FC > 0) %>% pull(entry)), set = "CD4_vs_CD8_+" )
+comp_corum_CD4meta_vs_CD8meta_downreg <- complex_corum(query_list = unique(data_CSC_prot_diff_v31_meta %>% filter(comparison == "CD4meta_vs_CD8meta", log2FC < 0) %>% pull(entry)), set = "CD4_vs_CD8_-" )
+# combine GO sets to one long df
+comp_corum_CSC <- rbind(comp_corum_nCD4_vs_nCD8_upreg, comp_corum_nCD4_vs_nCD8_downreg, comp_corum_nCD4_vs_nnCD4_upreg, comp_corum_nCD4_vs_nnCD4_downreg, comp_corum_nnCD4_vs_nnCD8_upreg, comp_corum_nnCD4_vs_nnCD8_downreg, 
+                     comp_corum_nCD8_vs_nnCD8_upreg, comp_corum_nCD8_vs_nnCD8_downreg, comp_corum_nMeta_vs_nnMeta_upreg, comp_corum_nMeta_vs_nnMeta_downreg, comp_corum_CD4meta_vs_CD8meta_upreg, comp_corum_CD4meta_vs_CD8meta_downreg
+) %>%
+  group_by(complex_name_cor) %>%
+  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
+  ungroup() %>%
+  arrange(desc(complex_recall_cor))
+# plotting ------
+common_params <- list( # Define common plot parameters
+  data = comp_corum_CSC,  min_recall = 1,    min_p_value = NULL,    grouping = "comparison",    term_column = "complex_name_cor",    distance_column = "complex_recall_cor",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "complex_name_cor",    size_var = "complex_recall_cor",    fill_var = NULL,    title_var = "Corum Complexes" # plot parameters
+)
+group_filters <- list( # Define different group filters
+  NULL,
+  c( "n_vs_nn_-", "n_vs_nn_+", "CD4_vs_CD8_-", "CD4_vs_CD8_+"),
+  c("nCD4_vs_nCD8_-", "nCD4_vs_nCD8_+", "nCD4_vs_nnCD4_-", "nCD4_vs_nnCD4_+", "nnCD4_vs_nnCD8_-", "nnCD4_vs_nnCD8_+", "nCD8_vs_nnCD8_-", "nCD8_vs_nnCD8_+"),
+  c("n_vs_nn_-", "n_vs_nn_+", "CD4_vs_CD8_-", "CD4_vs_CD8_+", "nCD4_vs_nCD8_-", "nCD4_vs_nCD8_+", "nCD4_vs_nnCD4_-", "nCD4_vs_nnCD4_+", "nnCD4_vs_nnCD8_-", "nnCD4_vs_nnCD8_+", "nCD8_vs_nnCD8_-", "nCD8_vs_nnCD8_+")
+)
+# Loop through group filters and create plots
+plots_comp_corum_CSC <- lapply(group_filters, function(filter) {
+  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+  if (is.null(filter)) { plot <- plot + theme(axis.text.x = element_text(angle = 25, hjust = 1))  }
+  print(plot)
+  return(plot)
+})
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## Complexes end _____________________________________________________________________________________________________________________________________________________________________
 
 
 
@@ -850,15 +885,70 @@ upset(data_CSC_prot_w_bin ,
 grid.text("Sig-Up regulated Proteins", x = 0.5, y = 0.95, gp = gpar(fontsize = 20))
 dev.off() # Close the device
 
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+########################################################################################################################################################################################################################
+sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
+ol_data <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_SuVo_TCRproxi_vs_CSCactTrends.csv", header = TRUE)
+ol_data <- data_LUX_prot_diff_v31 %>% filter(log2FC > 0.999999) %>% dplyr::select(entry_name, comparison) %>% rename("condition" = "comparison")
+unique(ol_data$condition)
+head(ol_data)
 
+# # test set
+# data <- data.frame(
+#   entry_name = c("TCR", "CD3", "ITA5",
+#                  "TCR", "CD20",
+#                  "TCR", "CD224", "ITA5"),
+#   condition  = c("A", "A", "A",
+#                  "B", "B",
+#                  "C", "C", "C")
+# )
+# calculate_overlaps(data = data, id_col = "entry_name", condition_col = "condition")
 
+ol_data_down <-  ol_data %>% filter(condition %in% c("v31_TCR", "v16.2_JK_meta_-", "v16.1_pT72_-"))
+ol_data_up   <-  ol_data %>% filter(condition %in% c("v31_TCR", "v16.2_JK_meta_+", "v16.1_pT72_+"))
 
+ol_down <- calculate_overlaps(data = ol_data_down, id_col = "entry_name", condition_col = "condition")
+ol_up   <- calculate_overlaps(data = ol_data_up  , id_col = "entry_name", condition_col = "condition")
+ol_     <- calculate_overlaps(data = ol_data  , id_col = "entry_name", condition_col = "condition")
 
+# Convert your data to a binary matrix format
+binary_matrix_down <- as.data.frame.matrix(table(ol_data_down$entry_name, ol_data_down$condition))
+binary_matrix_up   <- as.data.frame.matrix(table(ol_data$entry_name, ol_data$condition))
+# binary_matrix_up   <- as.data.frame.matrix(table(ol_data_up$entry_name, ol_data_up$condition))
 
-
-
-
-
-
-
+# Create the UpSet plot
+UpSetR::upset(
+  binary_matrix_down,
+  nsets = ncol(binary_matrix_down),  # Show all conditions
+  nintersects = 20,             # Show top 20 intersections
+  order.by = "freq",            # Order by intersection size
+  mb.ratio = c(0.6, 0.4),       # Matrix-to-bar ratio
+  text.scale = 2,             # Adjust text size
+  mainbar.y.label = "Intersection",
+  sets.x.label = "Protein Count"
+)
+# Create the UpSet plot
+UpSetR::upset(
+  binary_matrix_up,
+  nsets = ncol(binary_matrix_up),  # Show all conditions
+  nintersects = 20,             # Show top 20 intersections
+  order.by = "freq",            # Order by intersection size
+  mb.ratio = c(0.6, 0.4),       # Matrix-to-bar ratio
+  text.scale = 2,             # Adjust text size
+  mainbar.y.label = "Intersection",
+  sets.x.label = "Protein Count"
+)
 

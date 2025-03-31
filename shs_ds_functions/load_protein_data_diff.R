@@ -57,7 +57,7 @@ load_protein_data_diff <- function(directory_input) { ##########################
             order.by = "freq",
             mainbar.y.label = "Intersection Size",
             sets.x.label = "Set Size",
-            text.scale = c(1.3, 1.3, 1, 1, 1.3, 1),
+            text.scale = c(2, 2, 1.5, 1.5, 2, 1.5),
             point.size = 3,
             line.size = 1)  
     )
@@ -75,7 +75,7 @@ load_protein_data_diff <- function(directory_input) { ##########################
             order.by = "freq",
             mainbar.y.label = "Intersection Size",
             sets.x.label = "Set Size",
-            text.scale = c(1.3, 1.3, 1, 1, 1.3, 1),
+            text.scale = c(3, 3, 3, 3, 3, 3),
             point.size = 3,
             line.size = 1)
     )

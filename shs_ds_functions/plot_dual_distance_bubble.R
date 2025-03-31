@@ -122,23 +122,24 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_valu
   }
   
   # plotting ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-  if (is.null(fill_var)) {  # if there is no p_value or other continuous column to define color gradient 
+  if (is.null(fill_var)) {  # if there is no p_value or other continuous column to define color gradient
     plot <- ggplot(data_ordered, aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var)), shape = 21, color = "darkgrey", fill = "black") +
       scale_size(range = c(0, 10), limits = c(0.33, 1)) +
-      labs(x = "Condition", y = "Term", size = "Recall", title = title_var) +  
+      labs(x = "Condition", y = "Term", size = "Recall", title = title_var) +
       theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), panel.grid.minor = element_line(color = "grey", linetype = "dotted")    )
-    
-  } else {                  # p_value or other continuous column defines color gradient 
-    plot <-  ggplot(data_ordered, 
+
+  } else {                  # p_value or other continuous column defines color gradient
+    plot <-  ggplot(data_ordered,
                     aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var), fill = !!sym(fill_var)), shape = 21, color = "darkgrey") +
       scale_size(range = c(0, 10), limits = c(0.33, 1)) +
       scale_fill_gradient(low = "firebrick", high = "#fee0d2") +
-      labs(x = "Condition", y = "Term", size = "Recall", title = title_var) +  
+      labs(x = "Condition", y = "Term", size = "Recall", title = title_var) +
       theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), panel.grid.minor = element_line(color = "grey", linetype = "dotted")    )
-    
+
   }
+
   
   return(plot) 
   

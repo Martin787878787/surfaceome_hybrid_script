@@ -91,7 +91,7 @@ load_protein_data <- function(directory_input, condition_levels) {
           order.by = "freq",
           mainbar.y.label = "Intersection Size",
           sets.x.label = "Set Size",
-          text.scale = c(1.3, 1.3, 1, 1, 1.3, 1),
+          text.scale = c(3, 3, 3, 3, 3, 3),
           point.size = 3,
           line.size = 1)
   )
