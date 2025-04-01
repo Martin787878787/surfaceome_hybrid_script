@@ -6,8 +6,23 @@
 # 1.5  v16.2 Jurkat act timecourse heatmap and 
 # 2.0  include GO, interaction network data (biogrid, string) and complex data (complex_portal, compact)
 
+########################################################################################################################################################
+#### git ###############################################################################################################################################
+# # install.packages("gitcreds")
+# # install.packages("usethis")
+# # function to replace the old token with the new one:
+# library(gitcreds)
+# gitcreds::gitcreds_set()
+# # check if your new PAT has been successfully registered:
+# library(usethis)
+# usethis::git_sitrep()
+#_______________________________________________________________________________________________________________________________________________________
+########################################################################################################################################################
+
+
 rm(list = ls())                # clear workspace
 script_version = "_shs-ds2.0"  # version
+
 
 # Load libraries  ----------------------------------------------------------------------------------------------------------
 library(dplyr)      # Data wrangling
