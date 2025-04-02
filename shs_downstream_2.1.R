@@ -19,8 +19,9 @@
 #_______________________________________________________________________________________________________________________________________________________
 ########################################################################################################################################################
 
-
 rm(list = ls())                # clear workspace
+set.seed(123)  # Any fixed integer
+
 script_version = "_shs-ds2.0"  # version
 
 
@@ -317,89 +318,6 @@ plots_go_CSC <- lapply(group_filters, function(filter) {
 })
 # END gost ________________________________________________________________________________________________________________________________________________________________________
 
-## PPIs #########################################################################################################################################################################
-tcr_chains <- poi_reference %>% filter(!tcr_chains_manual_entry == "") %>% pull(tcr_chains_manual_entry)
-# biogrid PPIs -----------------------------------------------------------------------------------
-ppi_bg_overall_LUX <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% pull(entry))                                                     , mode = "physical", set = "overall")
-ppi_bg_nCD4        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD4"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nnCD4       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD4"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nnCD8       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD8"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nCD8        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD8"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nnMeta     <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_nMeta      <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_CD4meta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_CD8meta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_TCRmeta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)), mode = "physical", set = "metaTCR")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_panT_TCRLUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_TCRLUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_panT_CD4LUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD4LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_bg_panT_CD8LUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD8LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-
-# combine bg ppi sets to one long df
-ppi_bg <- rbind(ppi_bg_overall_LUX, ppi_bg_nCD4, ppi_bg_nnCD4, ppi_bg_nnCD8, ppi_bg_nCD8, 
-                ppi_bg_nnMeta, ppi_bg_nMeta, ppi_bg_CD4meta, ppi_bg_CD8meta, ppi_bg_TCRmeta,
-                ppi_bg_panT_TCRLUX, ppi_bg_panT_CD4LUX, ppi_bg_panT_CD8LUX) %>%
-  group_by(node_bg) %>%
-  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
-  ungroup()
-#
-ppi_bg %>%
-  ggplot(aes(x = comparison, y = node_degree_biogrid_global)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
-  labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "BioGrid: Global Degree of Query Proteins") +
-  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
-               hjust = 0.5, vjust = -0.5, color = "black", size = 5) 
-ppi_bg %>%
-  ggplot(aes(x = comparison, y = node_degree_biogrid_query_subset)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
-  labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "BioGrid: Query Internal Degree") +
-  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
-               hjust = 0, vjust = -0.5, color = "black", size = 5) 
-# not sure yet what to do with PPI info *o*
-# ???
-
-# string PPIs -----------------------------------------------------------------------------------
-ppi_str_overall_LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>%                                                    pull(entry)), mode = "physical", set = "overall" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nCD4        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD4"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nnCD4       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso") %>% pull(entry)), mode = "physical", set = "nnCD4"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nnCD8       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso") %>% pull(entry)), mode = "physical", set = "nnCD8"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nCD8        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD8"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nnMeta    <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_nMeta     <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_CD4meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_CD8meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_metaTCR   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)), mode = "physical", set = "metaTCR", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_panT_TCRLUX  <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_TCRLUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_panT_CD4LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD4LUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-ppi_str_panT_CD8LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD8LUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
-
-# combine bg ppi sets to one long df
-ppi_str <- rbind(ppi_str_overall_LUX, ppi_str_nCD4, ppi_str_nnCD4, ppi_str_nnCD8, ppi_str_nCD8, ppi_str_nnMeta, 
-                 ppi_str_nMeta, ppi_str_CD4meta, ppi_str_CD8meta, ppi_str_metaTCR,
-                 ppi_str_panT_TCRLUX, ppi_str_panT_CD4LUX, ppi_str_panT_CD8LUX) %>%
-  group_by(node_str) %>%
-  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
-  ungroup()
-
-ppi_str %>%
-  ggplot(aes(x = comparison, y = node_degree_string_phys_global)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
-  labs(x = "Comparison", y = "Node Degree (STRING)", title = "STRING: Global Physical Degree of Query Proteins") +
-  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
-               hjust = 0.5, vjust = -0.5, color = "black", size = 5) 
-ppi_str %>%
-  ggplot(aes(x = comparison, y = node_degree_string_phys_query_subset)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
-  labs(x = "Comparison", y = "Node Degree (STRING)", title = "STRING: Query Internal Physical Degree") +# not sure how to continue analysis from there
-  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
-               hjust = 0, vjust = -0.5, color = "black", size = 5) 
-# not sure yet what to do with PPI info *o*
-# ???
-## PPIs end _____________________________________________________________________________________________________________________________________________________________________
-
 ################################################################################################################################################################################################################################
 ################################################################################################################################################################################################################################
 ## Complexes ###################################################################################################################################################################################################################
@@ -574,12 +492,93 @@ plots_comp_corum_CSC <- lapply(group_filters, function(filter) {
   print(plot)
   return(plot)
 })
-
 ## Complexes end _____________________________________________________________________________________________________________________________________________________________________
 
+## PPIs #########################################################################################################################################################################
+tcr_chains <- poi_reference %>% filter(!tcr_chains_manual_entry == "") %>% pull(tcr_chains_manual_entry)
+# biogrid PPIs -----------------------------------------------------------------------------------
+ppi_bg_overall_LUX <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% pull(entry))                                                     , mode = "physical", set = "overall")
+ppi_bg_nCD4        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD4"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nnCD4       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD4"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nnCD8       <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnCD8"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nCD8        <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"    ) %>% pull(entry)), mode = "physical", set = "nCD8"   )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nnMeta     <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_nMeta      <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  )  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_CD4meta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_CD8meta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_TCRmeta    <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)), mode = "physical", set = "metaTCR")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_panT_TCRLUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_TCRLUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_panT_CD4LUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD4LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_bg_panT_CD8LUX  <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD8LUX")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
 
+# combine bg ppi sets to one long df
+ppi_bg <- rbind(ppi_bg_overall_LUX, ppi_bg_nCD4, ppi_bg_nnCD4, ppi_bg_nnCD8, ppi_bg_nCD8, 
+                ppi_bg_nnMeta, ppi_bg_nMeta, ppi_bg_CD4meta, ppi_bg_CD8meta, ppi_bg_TCRmeta,
+                ppi_bg_panT_TCRLUX, ppi_bg_panT_CD4LUX, ppi_bg_panT_CD8LUX) %>%
+  group_by(node_bg) %>%
+  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
+  ungroup()
+#
+ppi_bg %>%
+  ggplot(aes(x = comparison, y = node_degree_biogrid_global)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "BioGrid: Global Degree of Query Proteins") +
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0.5, vjust = -0.5, color = "black", size = 5) 
+ppi_bg %>%
+  ggplot(aes(x = comparison, y = node_degree_biogrid_query_subset)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (BioGrid)", title = "BioGrid: Query Internal Degree") +
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0, vjust = -0.5, color = "black", size = 5) 
+# not sure yet what to do with PPI info *o*
+# ???
 
+# string PPIs -----------------------------------------------------------------------------------
+ppi_str_overall_LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>%                                                    pull(entry)), mode = "physical", set = "overall" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nCD4        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD4_TCR_vs_nCD4_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD4"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nnCD4       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso") %>% pull(entry)), mode = "physical", set = "nnCD4"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nnCD8       <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso") %>% pull(entry)), mode = "physical", set = "nnCD8"   , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nCD8        <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nCD8_TCR_vs_nCD8_Iso"  ) %>% pull(entry)), mode = "physical", set = "nCD8"    , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nnMeta    <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nnMeta_TCR_vs_nnMeta_Iso"  ) %>% pull(entry)), mode = "physical", set = "nnMeta" , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_nMeta     <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "nMeta_TCR_vs_nMeta_Iso"    ) %>% pull(entry)), mode = "physical", set = "nMeta"  , string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_CD4meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD4meta_TCR_vs_CD4meta_Iso") %>% pull(entry)), mode = "physical", set = "CD4meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_CD8meta   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "CD8meta_TCR_vs_CD8meta_Iso") %>% pull(entry)), mode = "physical", set = "CD8meta", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_metaTCR   <- ppi_string(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% filter(comparison == "metaTCR_vs_metaIso")         %>% pull(entry)), mode = "physical", set = "metaTCR", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_panT_TCRLUX  <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "TCR_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_TCRLUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_panT_CD4LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD4_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD4LUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
+ppi_str_panT_CD8LUX <- ppi_string(query_list = unique(data_LUX_prot_diff_v24_v31_total %>% filter(comparison == "CD8_vs_Iso")         %>% pull(entry)), mode = "physical", set = "panT_CD8LUX", string_phys_confidence = "medium")  # mode is dummy parameter for now - considering to update later to allow non-physical search too
 
+# combine bg ppi sets to one long df
+ppi_str <- rbind(ppi_str_overall_LUX, ppi_str_nCD4, ppi_str_nnCD4, ppi_str_nnCD8, ppi_str_nCD8, ppi_str_nnMeta, 
+                 ppi_str_nMeta, ppi_str_CD4meta, ppi_str_CD8meta, ppi_str_metaTCR,
+                 ppi_str_panT_TCRLUX, ppi_str_panT_CD4LUX, ppi_str_panT_CD8LUX) %>%
+  group_by(node_str) %>%
+  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
+  ungroup()
+
+ppi_str %>%
+  ggplot(aes(x = comparison, y = node_degree_string_phys_global)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (STRING)", title = "STRING: Global Physical Degree of Query Proteins") +
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0.5, vjust = -0.5, color = "black", size = 5) 
+ppi_str %>%
+  ggplot(aes(x = comparison, y = node_degree_string_phys_query_subset)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
+  labs(x = "Comparison", y = "Node Degree (STRING)", title = "STRING: Query Internal Physical Degree") +# not sure how to continue analysis from there
+  stat_summary(fun = median, geom = "text", aes(label = round(..y.., 2)),
+               hjust = 0, vjust = -0.5, color = "black", size = 5) 
+# not sure yet what to do with PPI info *o*
+# ???
+## PPIs end _____________________________________________________________________________________________________________________________________________________________________
+
+## networking ###
+ppi_str_overall_LUX
 
 
 

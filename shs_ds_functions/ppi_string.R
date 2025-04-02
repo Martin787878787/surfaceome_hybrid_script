@@ -135,8 +135,8 @@ ppi_string <- function(query_list, mode, set, string_phys_confidence) {
   #  --------------------------------------------------------------------------------------------------------
   
   # trim df down to unique info
-  string_phys_query_subset_trimmed <- string_phys_query_subset %>%
-    dplyr::select(protein1_entry, interactors_string_phys_global, node_degree_string_phys_global, interactors_string_phys_query_subset, node_degree_string_phys_query_subset) %>%
+  string_phys_output <- string_phys_query_subset %>%
+    # dplyr::select(protein1_entry, interactors_string_phys_global, node_degree_string_phys_global, interactors_string_phys_query_subset, node_degree_string_phys_query_subset) %>%
     distinct() %>%
     arrange(desc(node_degree_string_phys_global)) %>%
     mutate(comparison = paste(set)) %>%
@@ -144,14 +144,14 @@ ppi_string <- function(query_list, mode, set, string_phys_confidence) {
   
   # investigate query connectivity
   paste0(length(unique(query_list)), " proteins were queried")                    
-  paste0(length(unique(string_phys_query_subset_trimmed$node_str)), " proteins that have PPI according to database")
-  paste0(round(length(unique(string_phys_query_subset_trimmed$node_str))/length(query_list)*100, 1), " % of queried proteins have PPI partner in query") 
-  paste0(round(length(unique(string_phys_query_subset_trimmed$node_str))/length(setdiff(query_list, tcr_chains))*100, 1), " % of queried proteins have PPI partner in query (TCR chains excluded)") 
-  paste0(median(string_phys_query_subset_trimmed$node_degree_string_phys_global),       " = median global node degree)")
-  paste0(median(string_phys_query_subset_trimmed$node_degree_string_phys_query_subset), " = median query intrinsic node degree)")
+  paste0(length(unique(string_phys_output$node_str)), " proteins that have PPI according to database")
+  paste0(round(length(unique(string_phys_output$node_str))/length(query_list)*100, 1), " % of queried proteins have PPI partner in query") 
+  paste0(round(length(unique(string_phys_output$node_str))/length(setdiff(query_list, tcr_chains))*100, 1), " % of queried proteins have PPI partner in query (TCR chains excluded)") 
+  paste0(median(string_phys_output$node_degree_string_phys_global),       " = median global node degree)")
+  paste0(median(string_phys_output$node_degree_string_phys_query_subset), " = median query intrinsic node degree)")
   
   #__________________________________________________________________________________________________________________________________________________________________________________________________________________________
   
-  return(string_phys_query_subset_trimmed)
+  return(string_phys_output)
   
 }
