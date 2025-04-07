@@ -495,6 +495,8 @@ plots_comp_corum_CSC <- lapply(group_filters, function(filter) {
 ## Complexes end _____________________________________________________________________________________________________________________________________________________________________
 
 ## PPIs #########################################################################################################################################################################
+sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
+
 tcr_chains <- poi_reference %>% filter(!tcr_chains_manual_entry == "") %>% pull(tcr_chains_manual_entry)
 # biogrid PPIs -----------------------------------------------------------------------------------
 ppi_bg_overall_LUX <- ppi_biogrid(query_list = unique(data_LUX_prot_diff_v31_meta_full %>% pull(entry))                                                     , mode = "physical", set = "overall")

@@ -36,11 +36,12 @@ ppi_string <- function(query_list, mode, set, string_phys_confidence) {
   
   # ensure to include A-B , B-A ppi relationship in string match frame (so no quer_list protein slips trough)
   string_phys <- string_phys %>%
-    # kick AB BA duplicates
-    mutate(AB = paste0(protein1_entry, protein2_entry),
-           BA = paste0(protein2_entry, protein1_entry)) %>%
-    distinct(AB, BA, .keep_all = TRUE) %>%
-    dplyr::select(-AB, -BA) %>%
+            # # kick AB BA duplicates
+    mutate(protein_min = pmin(protein1_entry, protein2_entry),
+           protein_max = pmax(protein1_entry, protein2_entry)
+           ) %>%
+    distinct(protein_min, protein_max, .keep_all = TRUE) %>%
+    dplyr::select(-protein_min, -protein_max) %>%
     # controlled introduction of AB BA
     mutate(dummy               = protein1_entry     , # store info
            dummy2              = protein1_entry_name, # store info
