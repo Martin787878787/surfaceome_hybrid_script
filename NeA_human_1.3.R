@@ -16,11 +16,12 @@ set.seed(123)
 script_version   = "NeA_1.3" # Network Analysis human 1.0
 ppi_network      = "string"      # c("string", "complexPortal")
 cluster_method   = "walktrap"    # c("walktrap", "markov", "betweenness")
-
+## pageRank
 pageRank_dampening_values = c(0.85)  # default 0.85
-pageRank_cutoff_values    = c(0.97, 0.98, 0.99, 0.999)  # the higher to more stringent the protein (shell of grey proteins) which are not shared between POIs (yellow) are cut 
+pageRank_cutoff_values    = c(0.8, 0.9, 0.95, 0.96, 0.97, 0.98, 0.99, 0.99)  # the higher to more stringent the protein (shell of grey proteins) which are not shared between POIs (yellow) are cut 
 pageRank_retain_all_changes = FALSE   # chose based on your goal: TRUE~"keep all input nodes"; FALSE~"keep only nodes with highest connectivity 
-
+## clustering
+walktrap_step_number_param = "auto"    # "auto" (auto_optimize) or *number*
 # defines max cluster size (all larger than this excluded for downstream analysis)
 param = 50 # start high (e.g. 500) than check "number_of_proteins_per_cluster.pdf" for orientation & titrate down (e.g. 100, 30) until "clustered_network_significant_with_changes_labeled.pdf" looks nice.  
 
@@ -29,7 +30,8 @@ base_directory  =  paste0("/Users/mgesell/Desktop/currentR/2025-01__local_reanal
 dir.create(paste0(base_directory), showWarnings = FALSE)
 # input data
 # changes         <- read.delim("/Users/mgesell/Desktop/currentR/Network_plotting_Cathy/v31_1-2_imputed_sigup-meta_nounique.txt", header = FALSE, stringsAsFactors = FALSE, sep = '\t') %>% pull(1)
-changes         <- read.delim("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/LUX_metachanges_shs2.22.csv", header = FALSE, stringsAsFactors = FALSE, sep = ',') %>% pull(1)
+# the file is/can be generated with shs_downstream_2.2 see cytoscape section
+changes         <- read.delim("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/LUX_metachanges_up_shs2.22.csv", header = FALSE, stringsAsFactors = FALSE, sep = ',') %>% pull(1)
 
 #######################################################################################################################################################################################
 #######################################################################################################################################################################################
@@ -45,7 +47,7 @@ for (loop_var1 in pageRank_dampening_values) {
     print(" ============= starting loop =============")
     print(paste0("pageRank_dampening: ", loop_var1, "    |    pageRank_cutoff: ",  loop_var2))
     setwd(base_directory)
-    result_directory = paste0(base_directory, "/",  script_version, "_", ppi_network, "-", loop_var1, "-", loop_var2, "-", param, "/")
+    result_directory = paste0(base_directory, "/",  script_version, "_", ppi_network, "-", loop_var1, "-", loop_var2, "-", param, "-walktrap", walktrap_step_number_param, "/")
     dir.create(result_directory, showWarnings = FALSE)
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -113,7 +115,7 @@ for (loop_var1 in pageRank_dampening_values) {
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     print(" ------------ network clustering ------------")
     #    settings walktrap
-    walktrap_step_number         <- 7  # 6 was in cathys default function
+    walktrap_step_number         <- walktrap_step_number_param  # 6 was in cathys default function
     #    settings markov
     markov_expansion_parameter   <- 2
     markov_inflation_coefficient <- 2
