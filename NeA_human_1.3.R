@@ -18,7 +18,7 @@ ppi_network      = "string"      # c("string", "complexPortal")
 cluster_method   = "walktrap"    # c("walktrap", "markov", "betweenness")
 ## pageRank
 pageRank_dampening_values = c(0.85)  # default 0.85
-pageRank_cutoff_values    = c(0.8, 0.9, 0.95, 0.96, 0.97, 0.98, 0.99, 0.99)  # the higher to more stringent the protein (shell of grey proteins) which are not shared between POIs (yellow) are cut 
+pageRank_cutoff_values    = c(0.5, 0.6, 0.7, 0.75, 0.8)  # the more "changes" proteins the higher number is recommended. (parameters defines which edges least connected to input nodes - higher --> more stringent cutting)
 pageRank_retain_all_changes = FALSE   # chose based on your goal: TRUE~"keep all input nodes"; FALSE~"keep only nodes with highest connectivity 
 ## clustering
 walktrap_step_number_param = "auto"    # "auto" (auto_optimize) or *number*
