@@ -96,11 +96,11 @@ run_pageRank <- function(dampening_factor, pageRank_percentile_cutoff, pageRank_
   print(paste0("  (Note:   *igraphexcluded* = ",  length(missing_in_igraph), " proteins that were exluded due to 0 edgest (isolated nodes))"))  
   print(paste0("................................................................................................................"))
 
-  write.table(data.frame(name = V(network_propagated)$name), file = paste0(result_directory, pageRank_percentile_cutoff , "_","network_propagated.csv"), col.names = FALSE, row.names = FALSE)
-  
   #### export results
   save(network_propagated, file = paste0(result_directory, "intermediate/pageRank_network.rds"))
   save(layout_propagated,  file = paste0(result_directory, "intermediate/layout_pageRank.rds" ))
   save(pageRank_full,      file = paste0(result_directory, "intermediate/pageRank_score.rds"  ))
   write.table(propagted_proteins, paste0(result_directory, "intermediate/propagted_proteins.tsv"), quote = F , sep = "\t", row.names = F)
+  write.table(unique(c(changes, propagted_proteins)), paste0(result_directory, "intermediate/propagted_proteins_plus_changes_input.tsv"), quote = F , sep = "\t", row.names = F)
+  
 }

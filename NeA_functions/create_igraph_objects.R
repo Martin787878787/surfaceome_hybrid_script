@@ -91,10 +91,10 @@ create_igraph_objects <- function(add_non_connected = FALSE,
   }
   # Section 3: Summary statistics
   print(paste0("=== Summary ==="))
-  print(paste0("Total changes proteins in input:    " , length(changes)                  ))
-  print(paste0("Present in network_full:            " , length(present_in_igraph)        ))
-  print(paste0("Completely missing:                 " , length(missing_in_igraph)        ))
-  print(paste0("Present but unconnected (0 edges):  " , length(unconnected_changes_nodes)))
+  print(paste0("Number of input proteins:                " , length(changes)                  ))
+  print(paste0("Present in network_full (igraph output): " , length(present_in_igraph)        ))
+  print(paste0("Igraph excluded (nodes with 0 edges)   : " , length(missing_in_igraph)        ))
+  # print(paste0("Present but unconnected (0 edges):     " , length(unconnected_changes_nodes)))
   ################################################################################################
   
   #### save network and layout

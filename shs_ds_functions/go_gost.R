@@ -22,7 +22,7 @@ go_gost <- function(query_list, max_term_size, set) {
                  domain_scope = "annotated",
                  # custom_bg = background_upUlrich,
                  numeric_ns = "",
-                 sources = NULL,
+                 sources = NULL, #When sources is set to NULL (the default), the analysis includes all Gene Ontology branches (GO:BP, GO:MF, GO:CC), KEGG pathways, Reactome (REAC), transcription factors (TF), miRNA targets (MIRNA), Human Phenotype Ontology (HP), CORUM protein complexes, WikiPathways (WP), and tissue-specific annotations (HPA).
                  as_short_link = FALSE,
                  highlight = TRUE)
   # subset and trim result
