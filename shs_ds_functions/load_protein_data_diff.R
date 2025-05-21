@@ -9,6 +9,14 @@ load_protein_data_diff <- function(directory_input) { ##########################
     filter(adj_pvalue <= pvalue_cutoff) %>%         # p value filtering
     distinct()
   
+  # sort dataframe by comparison, then determine overlap 
+  data_prot_diff <- data_prot_diff %>%
+    mutate(comparison = factor(comparison, levels = unique(data_prot_diff$comparison))) %>%
+    arrange(comparison) %>%
+    group_by(entry) %>%
+    mutate(overlap = paste(sort(unique(comparison[!is.na(log2FC) & log2FC != 0])), collapse = ".")) %>%
+    ungroup() 
+  
   # QC plots
   print(
     ggplot(data_prot_diff, aes(x = comparison, y = log2FC)) +

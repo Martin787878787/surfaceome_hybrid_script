@@ -92,7 +92,7 @@ lux_filter_stringency = ""    # "lux_signature_peptides_only", "gLUX_SOG_483_sig
 # stringent filter = highest data quality but missing values (loss of any non-glycosilated peptides for quantification)
 qc_reference          = "meta_surfaceome" #choose one reference: cspa_2015  surfy_2018   tcsa_2021  uniprot_2023  cd_antigen   meta_surfaceome (= cspa_2015surfy_2018tcsa_2021cd_antigen_veneer_proteome_high)
 poi_plotting_lists    = c("CPIs", "BindingBlockListPharmacoscopy_shilts2022_fig4d", "tcr_chains_cd3_mgmanual",
-                          "Tact_markers", "Thermo_Marker_Tsubset", "tcr_signaling_GO.0050852", "LUX_targets.CPIs")  # select one colnames(poi):  
+                          "Tact_markers", "Thermo_Marker_Tsubset", "tcr_signaling_GO.0050852", "LUX_targets.CPIs", "tetraspanins_galectins")  # select one colnames(poi):  
 # hot lists:              "LUX_targets.CPIs"	"POI_Ben"	"FACS_candidates"	"Tcell_Act_GO.0042110"	"Bcell_Act_GO.0042113"
 # Markers:                "Thermo_Marker_Tact"(1000)	"Thermo_Marker_Tsubset"	"Tact_markers" "BindingBlockListPharmacoscopy_shilts2022_fig4d"
 # Surface Annotations:    "cspa_2015"	"surfy_2018"	"tcsa_2021"	"uniprot_2023"	"cd_antigen"	"VeneerProteome_High"	"CSPA2015_Surfy2018_TCSA_2021_Cdantigen_VeneerProteome_High"

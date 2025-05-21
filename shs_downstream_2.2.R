@@ -1,5 +1,5 @@
 ###  Hdownstream processing of shs script
-###  2025-02-20
+###  2025-04-10
 ###  Martin Gesell
 ####################################################################################################################################
 # 1.4  v31 csc lux hybrid script
@@ -22,7 +22,7 @@
 rm(list = ls())                # clear workspace
 set.seed(123)  # Any fixed integer
 
-script_version = "_shs-ds2.0"  # version
+script_version = "_shs-ds2.2"  # version
 
 
 # Load libraries  ----------------------------------------------------------------------------------------------------------
@@ -98,6 +98,37 @@ condition_levels_LUX_31_meta_all  = c("nCD4_TCR", "nnCD4_TCR", "nCD8_TCR", "nnCD
 #
 condition_levels_LUX_31_meta_full  = c("metaTCR", "metaIso") # experiment specific condition & order desired in plots (& dataframes)
 
+##############################################################################################################################################################################################################################################################################################
+##############################################################################################################################################################################################################################################################################################
+## load data 
+# protein level data
+data_CSC_prot_v16         <-   load_protein_data(directory_input = directory_input_CSC_16                 , condition_levels = condition_levels_CSC_16)
+
+data_CSC_prot_v31         <-   load_protein_data(directory_input = directory_input_CSC_31                 , condition_levels = condition_levels_CSC_31)
+data_CSC_prot_v31_meta    <-   rbind(data_CSC_prot_v31,
+                                     load_protein_data(directory_input = directory_input_CSC_31_meta      , condition_levels = condition_levels_CSC_31_meta) ) 
+data_LUX_prot_v31          <-  load_protein_data(directory_input = directory_input_LUX_31                 , condition_levels = condition_levels_LUX_31)
+data_LUX_prot_v31_meta     <-  rbind(data_LUX_prot_v31,
+                                     load_protein_data(directory_input = directory_input_LUX_31_meta      , condition_levels = condition_levels_LUX_31_meta)  )
+data_LUX_prot_v31_meta_full <- rbind(data_LUX_prot_v31_meta,
+                                     load_protein_data(directory_input = directory_input_LUX_31_full_meta , condition_levels = condition_levels_LUX_31_meta_full))
+
+data_LUX_prot_v24   <- load_protein_data(directory_input = directory_input_LUX_24, condition_levels = condition_levels_LUX_24_all)
+
+# diff abundance data
+data_CSC_prot_diff_v31           <- load_protein_data_diff(directory_input       = directory_input_CSC_31           )
+data_CSC_prot_diff_v31_meta      <- rbind(data_CSC_prot_diff_v31,
+                                          load_protein_data_diff(directory_input = directory_input_CSC_31_meta      )  )
+data_LUX_prot_diff_v31           <- load_protein_data_diff(directory_input       = directory_input_LUX_31           )
+data_LUX_prot_diff_v31_meta      <- rbind(data_LUX_prot_diff_v31,
+                                          load_protein_data_diff(directory_input = directory_input_LUX_31_meta      )  )
+data_LUX_prot_diff_v31_meta_full <- rbind(data_LUX_prot_diff_v31_meta,
+                                          load_protein_data_diff(directory_input = directory_input_LUX_31_full_meta )  )
+
+data_LUX_prot_diff_v24            <- load_protein_data_diff(directory_input       = directory_input_LUX_24           )
+data_LUX_prot_diff_v24_v31_total  <- rbind(data_LUX_prot_diff_v24,
+                                           data_LUX_prot_diff_v31_meta_full)
+###################################################################################################################################################################################################################################################################################################
 
 ## human string - parameters ===================================================================================================================================================================================================================================================================
 # usually don't touch
@@ -163,47 +194,12 @@ plot_theme <- function() {
 }
 theme_set(plot_theme()) # all plots generated from this script thosuld have same theme now 
 #
-#
-#
-##############################################################################################################################################################################################################################################################################################
-##############################################################################################################################################################################################################################################################################################
-## load data 
-# protein level data
-data_CSC_prot_v16         <-   load_protein_data(directory_input = directory_input_CSC_16                 , condition_levels = condition_levels_CSC_16)
 
-data_CSC_prot_v31         <-   load_protein_data(directory_input = directory_input_CSC_31                 , condition_levels = condition_levels_CSC_31)
-data_CSC_prot_v31_meta    <-   rbind(data_CSC_prot_v31,
-                                     load_protein_data(directory_input = directory_input_CSC_31_meta      , condition_levels = condition_levels_CSC_31_meta) ) 
-data_LUX_prot_v31          <-  load_protein_data(directory_input = directory_input_LUX_31                 , condition_levels = condition_levels_LUX_31)
-data_LUX_prot_v31_meta     <-  rbind(data_LUX_prot_v31,
-                                     load_protein_data(directory_input = directory_input_LUX_31_meta      , condition_levels = condition_levels_LUX_31_meta)  )
-data_LUX_prot_v31_meta_full <- rbind(data_LUX_prot_v31_meta,
-                                     load_protein_data(directory_input = directory_input_LUX_31_full_meta , condition_levels = condition_levels_LUX_31_meta_full))
-
-data_LUX_prot_v24   <- load_protein_data(directory_input = directory_input_LUX_24, condition_levels = condition_levels_LUX_24_all)
-
-# diff abundance data
-data_CSC_prot_diff_v31           <- load_protein_data_diff(directory_input       = directory_input_CSC_31           )
-data_CSC_prot_diff_v31_meta      <- rbind(data_CSC_prot_diff_v31,
-                                          load_protein_data_diff(directory_input = directory_input_CSC_31_meta      )  )
-data_LUX_prot_diff_v31           <- load_protein_data_diff(directory_input       = directory_input_LUX_31           ) # write.csv(data_LUX_prot_diff_v31, "/Users/mgesell/Downloads/data_LUX_prot_diff_v31.csv", row.names = FALSE)
-data_LUX_prot_diff_v31_meta      <- rbind(data_LUX_prot_diff_v31,
-                                          load_protein_data_diff(directory_input = directory_input_LUX_31_meta      )  )
-data_LUX_prot_diff_v31_meta_full <- rbind(data_LUX_prot_diff_v31_meta,
-                                          load_protein_data_diff(directory_input = directory_input_LUX_31_full_meta )  )
-
-data_LUX_prot_diff_v24            <- load_protein_data_diff(directory_input       = directory_input_LUX_24           )
-data_LUX_prot_diff_v24_v31_total  <- rbind(data_LUX_prot_diff_v24,
-                                           data_LUX_prot_diff_v31_meta_full)
-
-
-
-sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
-###################################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################################
 ################################################## End of Input Section ###########################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################################
+sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/shs_ds_functions", pattern = "\\.R$", full.names = TRUE), source)
 
 
 # v31 specific - check abundance vs LUX sig_up and LUX TCR core ###########################################################################################################################################################################
@@ -581,6 +577,68 @@ ppi_str %>%
 
 ## networking ###
 ppi_str_overall_LUX
+
+
+
+
+
+
+
+#####################################################################################################################################################################################################
+## Cytoscape / cytoscape piechart highligting =======================================================================================================================================================
+# objective: map LUX and CSC data onto the STRING-pageRank expanded network
+#
+# pageRank_network_propagated_nodes <- read.csv('/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string-0.85-0.97-50-walktrapauto/0.97_network_propagated.csv', header = FALSE)  %>%
+#   rename("entry" = "V1")
+# propagted_proteins.tsv
+pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/intermediate/propagted_proteins.tsv", header = TRUE)                    %>%  rename("entry" = "x")
+# propagted_proteins_plus_changes_input.tsv
+pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/intermediate/propagted_proteins_plus_changes_input.tsv", header = TRUE) %>%  rename("entry" = "x")
+
+LUX_sig_up <- data_LUX_prot_diff_v31 %>% filter(log2FC > 1 & adj_pvalue <= 0.05) %>% filter(entry %in% unique(pageRank_network_propagated_nodes$entry))
+# write.table(LUX_sig_up %>% dplyr::select(entry) %>% distinct(), "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/LUX_metachanges_up_shs2.22.csv", row.names = FALSE, col.names = FALSE, sep = ",")
+CSC_quants <- data_CSC_prot_v31
+
+paste("NOTE ", length(unique(LUX_sig_up$entry)), "meta hits in LUX and", length(unique(pageRank_network_propagated_nodes$entry)), "total nodes in propagated network")
+  
+# append LUX data 
+pageRank_plux_LUX <- pageRank_network_propagated_nodes %>%
+  mutate(CD4_n  = ifelse(entry %in% c(LUX_sig_up %>% dplyr::filter(comparison == "nCD4_TCR_vs_nCD4_Iso")   %>% pull(entry)), 1, 0),
+         CD4_nn = ifelse(entry %in% c(LUX_sig_up %>% dplyr::filter(comparison == "nnCD4_TCR_vs_nnCD4_Iso") %>% pull(entry)), 1, 0),
+         CD8_n  = ifelse(entry %in% c(LUX_sig_up %>% dplyr::filter(comparison == "nCD8_TCR_vs_nCD8_Iso")   %>% pull(entry)), 1, 0),
+         CD8_nn = ifelse(entry %in% c(LUX_sig_up %>% dplyr::filter(comparison == "nnCD8_TCR_vs_nnCD8_Iso") %>% pull(entry)), 1, 0)
+  ) %>%
+  pivot_longer(cols = -entry, names_to = "condition", values_to = "LUX")
+
+pageRank_plux_CSC <- left_join( # combine log2FC and zscore mapped data
+  # extract and map log2FC data
+  pageRank_network_propagated_nodes %>% 
+    left_join(
+      CSC_quants %>% 
+        dplyr::select(entry, condition, log2_median) %>% 
+        pivot_wider(names_from = condition, values_from = log2_median),
+      by = "entry"    )   %>%
+    rename("CD4_n" = "nCD4", "CD4_nn" = "nnCD4", "CD8_n" = "nCD8", "CD8_nn" = "nnCD8") %>%
+    pivot_longer(cols = -entry, names_to = "condition", values_to = "log2_median"),
+  # extract and map zscore data
+  pageRank_network_propagated_nodes %>% 
+    left_join(
+      CSC_quants %>% 
+        dplyr::select(entry, condition, log2_z_score) %>% 
+        pivot_wider(names_from = condition, values_from = log2_z_score),
+      by = "entry"    )%>%
+    rename("CD4_n" = "nCD4", "CD4_nn" = "nnCD4", "CD8_n" = "nCD8", "CD8_nn" = "nnCD8")  %>%
+    pivot_longer(cols = -entry, names_to = "condition", values_to = "log2_z_score")
+  # ...
+  ,  by = c("entry", "condition")
+  )  
+# combine and export   
+pageRank_mapped_LUX_CSC <- left_join(pageRank_plux_CSC, pageRank_plux_LUX,  by = c("entry", "condition")) %>%
+  arrange(entry, match(condition, c("CD4_n", "CD4_nn", "CD8_nn", "CD8_n"))) %>%
+  mutate(pie_LUX = ifelse(LUX == 1, condition, NA))
+write.csv(pageRank_mapped_LUX_CSC, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/pageRank_mapped_LUX_CSC.csv")
+#___________________________________________________________________________________________________________________________________________________________
+
 
 
 

@@ -38,7 +38,7 @@ load_protein_data <- function(directory_input, condition_levels) {
     mutate(condition = factor(condition, levels = condition_levels)) %>%
     arrange(condition) %>%
     group_by(entry) %>%
-    mutate(overlap = paste(sort(unique(condition[!is.na(log2_median) & log2_median != 0])), collapse = "_")) %>%
+    mutate(overlap = paste(sort(unique(condition[!is.na(log2_median) & log2_median != 0])), collapse = ".")) %>%
     ungroup() 
   
   # impute NA (after completing df)

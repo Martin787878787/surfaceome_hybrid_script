@@ -37,26 +37,26 @@ filter_complexPortal_network <- function(complexPortal_input_file, complexPortal
     
   }
   
-  colnames(output) <- c("Complex", "protein1_ID", "protein2_ID")
+  colnames(output) <- c("Complex", "protein1_entry", "protein2_entry")
   output <- as.data.frame(output)
   
   #### filter for self-loops
-  index <- which(output$protein1_ID == output$protein2_ID)
+  index <- which(output$protein1_entry == output$protein2_entry)
   if (length(index) >0){
     output <- output[-index,]  
   }
   
   
   #### filter for AB = BA
-  AB <- paste(output$protein1_ID, "_", output$protein2_ID, sep = "")
-  BA <- paste(output$protein2_ID, "_", output$protein1_ID, sep = "")
+  AB <- paste(output$protein1_entry, "_", output$protein2_entry, sep = "")
+  BA <- paste(output$protein2_entry, "_", output$protein1_entry, sep = "")
   
   index <- which(AB == BA)
   if (length(index) >0){
     output <- output[-index,]  
   }
   
-  output <- output[, c("protein1_ID", "protein2_ID")]
+  output <- output[, c("protein1_entry", "protein2_entry")]
   
   
   #### export

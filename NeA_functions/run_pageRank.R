@@ -3,6 +3,7 @@ run_pageRank <- function(dampening_factor, pageRank_percentile_cutoff, pageRank_
   load( file = paste0(result_directory, "intermediate/", "full_network.rds"))
   load( file = paste0(result_directory, "intermediate/", "layout_full.rds" ))
   load( file = paste0(result_directory, "intermediate/", "changes.rds"     ))
+  load( file = paste0(result_directory, "intermediate/", "igraph_diagnostics.rds"))
   
   #### run page rank
   # Identifies special nodes (changes) and assigns them higher importance in PageRank. 
@@ -70,11 +71,11 @@ run_pageRank <- function(dampening_factor, pageRank_percentile_cutoff, pageRank_
   
   # 2. Extract Node Names and Indices
   if (pageRank_retain_all_changes == FALSE) {
-    propagted_proteins   <- names(pageRank_full[[1]])[index_pagerank]                # Gets the names of significant nodes.
+    propagated_proteins   <- names(pageRank_full[[1]])[index_pagerank]                # Gets the names of significant nodes.
   } else if (pageRank_retain_all_changes == TRUE) {
-    propagted_proteins <- union(names(pageRank_full[[1]])[index_pagerank], changes)
+    propagated_proteins <- union(names(pageRank_full[[1]])[index_pagerank], changes)
   }
-  index_pagerank       <- which(V(network_full)$name %in% propagted_proteins)         # Reindexing: Maps these names back to their positions in the original network (network_full).
+  index_pagerank       <- which(V(network_full)$name %in% propagated_proteins)         # Reindexing: Maps these names back to their positions in the original network (network_full).
  
   # 3. Create the Filtered (Propagated) Subnetwork
   network_propagated   <- induced_subgraph(network_full, index_pagerank)
@@ -89,18 +90,21 @@ run_pageRank <- function(dampening_factor, pageRank_percentile_cutoff, pageRank_
     title("Network after pageRank", cex.main = 2)
   dev.off()
  
-  removed_changes <- unique(setdiff(unique(changes), union(V(network_propagated)$name, missing_in_igraph)))
+  removed_changes <- unique(
+    setdiff(unique(changes), 
+            union(V(network_propagated)$name, igraph_diagnostics$missing_in_igraph) 
+            ))
   print(paste0("..... PageRank report .........................................................................................."))
   print(paste0("PageRank filtering yields   ",  length(V(network_propagated)$name), " nodes & ", gsize(network_propagated), " edges (",   round(length(V(network_propagated)$name)/length(V(network_full)$name)*100,2), " % of orignially ", length(V(network_full)$name), " nodes)"))
-  print(paste0("Out of ", length(unique(changes))-length(missing_in_igraph), " proteins from input list (changes-igraphexcluded), ", length(removed_changes), " were excluded from output network due to pageRank quantile filtering"))
-  print(paste0("  (Note:   *igraphexcluded* = ",  length(missing_in_igraph), " proteins that were exluded due to 0 edgest (isolated nodes))"))  
+  print(paste0("Out of ", length(unique(changes))-length(igraph_diagnostics$missing_in_igraph), " proteins from input list (changes-igraphexcluded), ", length(removed_changes), " were excluded from output network due to pageRank quantile filtering"))
+  print(paste0("  (Note:   *igraphexcluded* = ",  length(igraph_diagnostics$missing_in_igraph), " proteins that were exluded due to 0 edgest (isolated nodes))"))  
   print(paste0("................................................................................................................"))
 
   #### export results
-  save(network_propagated, file = paste0(result_directory, "intermediate/pageRank_network.rds"))
-  save(layout_propagated,  file = paste0(result_directory, "intermediate/layout_pageRank.rds" ))
-  save(pageRank_full,      file = paste0(result_directory, "intermediate/pageRank_score.rds"  ))
-  write.table(propagted_proteins, paste0(result_directory, "intermediate/propagted_proteins.tsv"), quote = F , sep = "\t", row.names = F)
-  write.table(unique(c(changes, propagted_proteins)), paste0(result_directory, "intermediate/propagted_proteins_plus_changes_input.tsv"), quote = F , sep = "\t", row.names = F)
+  save(network_propagated, file = paste0(result_directory,  "intermediate/pageRank_network.rds"))
+  save(layout_propagated,  file = paste0(result_directory,  "intermediate/layout_pageRank.rds" ))
+  save(pageRank_full,      file = paste0(result_directory,  "intermediate/pageRank_score.rds"  ))
+  write.table(propagated_proteins, paste0(result_directory, "intermediate/propagated_proteins.tsv"), quote = F , sep = "\t", row.names = F)
+  write.table(unique(c(changes, propagated_proteins)), paste0(result_directory, "intermediate/propagated_proteins_plus_changes_input.tsv"), quote = F , sep = "\t", row.names = F)
   
 }

@@ -5,10 +5,6 @@ walktrap_clustering <- function(walktrap_step_number){
   load(file = paste0(result_directory, "intermediate/", "layout_pageRank.rds" ))
   
   
-  
-  
-  
-
   ##### run walktrap clustering based on specific input value defining step number or based on automated parameter optimization ("auto")
   if (!is.numeric(walktrap_step_number) && walktrap_step_number != "auto") {
     stop("walktrap_step_number must be numeric or 'auto'")

@@ -24,12 +24,12 @@ ppi_network      = "string"      # c("string", "complexPortal")
 cluster_method   = "walktrap"    # c("walktrap", "markov", "betweenness")
 ## pageRank
 pageRank_dampening_values = c(0.85)  # default 0.85
-pageRank_cutoff_values    = c(0.975)  # the more "changes" proteins the higher number is recommended. (parameters defines which edges least connected to input nodes - higher --> more stringent cutting)
+pageRank_cutoff_values    = c(0.9295)  # the more "changes" proteins the higher number is recommended. (parameters defines which edges least connected to input nodes - higher --> more stringent cutting)
 pageRank_retain_all_changes = FALSE   # chose based on your goal: TRUE~"keep all input nodes"; FALSE~"keep only nodes with highest connectivity 
 ## clustering
 walktrap_step_number_param = "auto"    # "auto" (auto_optimize) or *number*
 # defines max cluster size (all larger than this excluded for downstream analysis)
-param = 50 # start high (e.g. 500) than check "number_of_proteins_per_cluster.pdf" for orientation & titrate down (e.g. 100, 30) until "clustered_network_significant_with_changes_labeled.pdf" looks nice.  
+cluster_max_size_param = 100 # start high (e.g. 500) than check "number_of_proteins_per_cluster.pdf" for orientation & titrate down (e.g. 100, 30) until "clustered_network_significant_with_changes_labeled.pdf" looks nice.  
 
 # directory
 base_directory  =  paste0("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA")
@@ -65,7 +65,7 @@ for (condi in condition_levels) {
       print(" ============= starting loop =============")
       print(paste0("pageRank_dampening: ", loop_var1, "    |    pageRank_cutoff: ",  loop_var2))
       setwd(base_directory)
-      result_directory = paste0(base_directory, "/",  script_version, "_", ppi_network, "_", condi, "_", loop_var1, "-", loop_var2, "-", param, "-walktrap", walktrap_step_number_param, "/")
+      result_directory = paste0(base_directory, "/",  script_version, "_", ppi_network, "_", condi, "_", loop_var1, "-", loop_var2, "-", cluster_max_size_param, "-walktrap", walktrap_step_number_param, "/")
       dir.create(result_directory, showWarnings = FALSE)
   
       #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ for (condi in condition_levels) {
       print(" ------------ ppi network ------------")
       if (ppi_network == "string" ){             # ppi_network = string
         string_network        <- "full"   # select "full" / "physical" / "functional"
-        string_score_cutoff   <- 400 # cathy used 700 as default     string combined score ranges 0-1000; 400 threshold for medium confidence, 700 for high confidence;    low throughput high accuracy experiment data results score usually +/- 600; high throughput low accuracy data scores <= 250
+        string_score_cutoff   <- 700 # cathy used 700 as default     string combined score ranges 0-1000; 400 threshold for medium confidence, 700 for high confidence;    low throughput high accuracy experiment data results score usually +/- 600; high throughput low accuracy data scores <= 250
         # string_linkage_categs <- c("experimental", "database", "fusion", "neighborhood", 	"cooccurence",	"coexpression",	"textmining")   # select info levels to be used these are available:   c("experimental", "database", "fusion", "neighborhood", 	"cooccurence",	"coexpression",	"textmining") 
         network_output_filename <- "network_interactions_string"   # 
         
@@ -154,12 +154,12 @@ for (condi in condition_levels) {
       #    settings 
       if (ppi_network == "string" ){             # ppi_network = string
         cluster_min_size = 2
-        cluster_max_size = param 
+        cluster_max_size = cluster_max_size_param 
         cluster_min_changes_above_2_subunits <- 1 
         cluster_min_changes_with_2_subunits  <- 1
       } else if (ppi_network =="complexPortal"){ # ppi_network = complexPortal
         cluster_min_size = 2
-        cluster_max_size = param 
+        cluster_max_size = cluster_max_size_param 
         cluster_min_changes_above_2_subunits <- 1 
         cluster_min_changes_with_2_subunits  <- 1
       }

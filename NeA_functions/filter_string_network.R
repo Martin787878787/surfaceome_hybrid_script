@@ -4,74 +4,86 @@ filter_string_network <- function(string_network, string_score_cutoff,
 
  ### new uniprot to string code 2025-05-05 Martin (see old code below) #########################################################################################################################
  ###############################################################################################################################################################################################
- 
+
+  ## step 0: check if required string resource exists - if not download ---------------------------------------------------------------------------------------------------------------------------------------------------------
+  file_path <- paste0("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_",  string_network, "_cutoff", string_score_cutoff, ".csv"  )
   
-  # #########################################################################################################################################################################################
-  # ## step 0.1: source human proteome. used to query string & key to translate ENSP column to entry format ---------------------------------------------------------------------------------
-  # library(queryup)
-  # up_human <- get_uniprot_data(
-  #     query = list(
-  #       organism_id = "9606",
-  #       reviewed = "true"
-  #     ),
-  #     columns = c("accession", "id", "xref_string", "reviewed") # "xref_ensembl",
-  #   )$content %>%
-  #   mutate(STRING = gsub(";", "", STRING))
-  # write.csv(up_human, "/Users/mgesell/Desktop/currentR/git/shs_resources/_string_ensembl_key.csv", row.names = FALSE)
-  # #
-  # up_human <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/_string_ensembl_key.csv", header = TRUE)
-  # paste( # FYI
-  #   "Out of", length(unique(up_human$Entry)), "proteins, only",
-  #   length(unique(up_human$STRING)), "string annotated.",
-  #   length(unique(up_human$Entry)) - length(unique(up_human$STRING)), "missing (",
-  #   round((length(unique(up_human$Entry)) - length(unique(up_human$STRING))) / length(unique(up_human$Entry)) * 100, 1), "% missing)"
-  # ) 
-  # 
-  # ## step 0.2: string - download, filter and translate to entry format  -----------------------------------------------------------------------------------
-  # library(STRINGdb)
-  # # Initialize STRINGdb instance with human species and score threshold 400
-  # string_db <- STRINGdb$new(
-  #   version = "12.0",
-  #   species = 9606,                          # NCBI taxonomy ID for Homo sapiens
-  #   score_threshold = string_score_cutoff,   # Includes interactions_string_up_human with combined score ≥ ...
-  #   network_type = string_network                    # Includes functional and physical interactions_string_up_human
-  # )
-  # # Map UniProt IDs to STRING identifiers
-  # string_up_human <- string_db$map(
-  #   data.frame(uniprot_id = up_human$Entry),
-  #   "uniprot_id",
-  #   removeUnmappedRows = TRUE  # Remove unmappable IDs
-  # ) 
-  # # Get ALL interactions_string_up_human between string_up_human proteins and their partners
-  # # and filter
-  # interactions_string_up_human <- string_db$get_interactions(string_up_human$STRING_id) %>%
-  #   filter(!is.na(from), !is.na(to)) %>%  # filter out NAs in mapping ------
-  #   filter(from != to) %>%                # filter out self-loops  A = A --
-  #   mutate(protein_min = pmin(from, to), 
-  #          protein_max = pmax(from, to)
-  #   ) %>%
-  #   distinct(protein_min, protein_max, .keep_all = TRUE) %>%   # kick AB BA duplicates ----------
-  #   dplyr::select(-protein_min, -protein_max) %>%
-  #   distinct() # Remove duplicates
-  # 
-  # # Map 'from' and 'to' columns in interactions_string_up_human to UniProt Entry
-  # interactions_string_up_human <- interactions_string_up_human %>%
-  #   left_join(up_human, by = c("from" = "STRING")) %>%
-  #   rename(protein1_entry  = Entry) %>%
-  #   left_join(up_human, by = c("to" = "STRING")) %>%
-  #   rename(protein2_entry  = Entry) 
-  # 
-  # upsp_string <- interactions_string_up_human %>%
-  #   dplyr::select(protein1_entry, protein2_entry) %>% 
-  #   distinct()
-  # write.csv(upsp_string, paste0("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_", string_network, "_cutoff", string_score_cutoff, ".csv"), 
-  #           row.names = FALSE)
-  # # ______________________________________________________________________________________________________________________________________________________________________________________
-  # #########################################################################################################################################################################################
-   
-  ## step 1: load string ---------------------------------------------------------------------------------------------------------------------------------------------------------
-  upsp_string <- read.csv(paste0("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_", string_network, "_cutoff", string_score_cutoff, ".csv")
-                          , header = TRUE) %>% 
+  # Check if the file exists
+  if (!file.exists(file_path)) {
+    message(
+      " ------------------------------------------------------------------------------------------------------------------------------ \n",
+      "   --- ATTENTION - local string resource with specified parameters does not exist. will download it. will take 5-10 minutes  ---- \n",
+      "   ------------------------------------------------------------------------------------------------------------------------------ "
+    )
+    ## step 0.1: source human proteome. used to query string & key to translate ENSP column to entry format ---------------------------------------------------------------------------------
+    library(queryup)
+    up_human <- get_uniprot_data(
+      query = list(
+        organism_id = "9606",
+        reviewed = "true"
+      ),
+      columns = c("accession", "id", "gene_primary", "xref_string", "reviewed")   # "xref_ensembl",
+    )$content %>%
+      rename("entry" = "Entry", "entry_name" = "Entry Name", "gene" = "Gene Names (primary)", "string" = "STRING", "reviewed" = "Reviewed") %>%
+      mutate(string = gsub(";", "", string)) 
+
+    write.csv(up_human, "/Users/mgesell/Desktop/currentR/git/shs_resources/_NeA_uniprot_string_ensembl_key.csv", row.names = FALSE)
+    #
+    up_human <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/_NeA_uniprot_string_ensembl_key.csv", header = TRUE)
+    paste( # FYI
+      "Out of", length(unique(up_human$entry)), "proteins, only",
+      length(unique(up_human$string)), "string annotated.",
+      length(unique(up_human$entry)) - length(unique(up_human$string)), "missing (",
+      round((length(unique(up_human$entry)) - length(unique(up_human$string))) / length(unique(up_human$entry)) * 100, 1), "% missing)"
+    )
+    
+    ## step 0.2: string - download, filter and translate to entry format  -----------------------------------------------------------------------------------
+    library(STRINGdb)
+    # Initialize STRINGdb instance with human species and score threshold 400
+    string_db <- STRINGdb$new(
+      version = "12.0",
+      species = 9606,                          # NCBI taxonomy ID for Homo sapiens
+      score_threshold = string_score_cutoff,   # Includes interactions_string_up_human with combined score ≥ ...
+      network_type    = string_network         # Includes functional and physical interactions_string_up_human
+    )
+    # Map UniProt IDs to string identifiers
+    string_up_human <- string_db$map(
+      data.frame(uniprot_id = up_human$entry),
+      "uniprot_id",
+      removeUnmappedRows = TRUE  # Remove unmappable IDs
+    )
+    # Get ALL interactions_string_up_human between string_up_human proteins and their partners
+    # and filter
+    interactions_string_up_human <- string_db$get_interactions(string_up_human$STRING_id) %>%
+      filter(!is.na(from), !is.na(to)) %>%  # filter out NAs in mapping ------
+    filter(from != to) %>%                # filter out self-loops  A = A --
+      mutate(protein_min = pmin(from, to),
+             protein_max = pmax(from, to)
+      ) %>%
+      distinct(protein_min, protein_max, .keep_all = TRUE) %>%   # kick AB BA duplicates ----------
+    dplyr::select(-protein_min, -protein_max) %>%
+      distinct() # Remove duplicates
+    
+    # Map 'from' and 'to' columns in interactions_string_up_human to UniProt entry
+    interactions_string_up_human <- interactions_string_up_human %>%
+      left_join(up_human, by = c("from" = "string")) %>%
+      rename(protein1_entry  = entry) %>%
+      left_join(up_human, by = c("to" = "string")) %>%
+      rename(protein2_entry  = entry)
+    
+    upsp_string <- interactions_string_up_human %>%
+      dplyr::select(protein1_entry, protein2_entry) %>%
+      distinct()
+    write.csv(upsp_string, paste0("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_", string_network, "_cutoff", string_score_cutoff, ".csv"),
+              row.names = FALSE)
+    
+  } # _____________________________________________________________________________________________________________________________________________________________________________________
+  #########################################################################################################################################################################################
+  #########################################################################################################################################################################################
+
+  
+  # read string resource file with specified parameters
+  upsp_string <- read.csv(file_path, header = TRUE) %>% 
     filter(!is.na(protein1_entry) & !is.na(protein2_entry))
   ## step 2: subset string ---------------------------------------------------------------------------------------------------------------------------------------------------------
   string_output <- upsp_string %>% 

@@ -1,7 +1,7 @@
 summary_plots <- function(){
   ##### load data
   load(file =                 paste0(result_directory, "intermediate/", "Changes.rds"            ))
-  propagted_proteins <- fread(paste0(result_directory, "intermediate/", "propagted_proteins.tsv" ))
+  propagated_proteins <- fread(paste0(result_directory, "intermediate/", "propagated_proteins.tsv" ))
   load(file =                 paste0(result_directory, "final/"       , "cluster_sig_network.rds"))
   load(file =                 paste0(result_directory, "intermediate/", "full_network.rds"       ))
   
@@ -9,14 +9,14 @@ summary_plots <- function(){
   
   #### plot 1: number of proteins at different steps
   number_of_input_hits              <- length(intersect(changes, names(V(network_full))))
-  number_of_propagted_proteins      <- length(unique(propagted_proteins$x))
+  number_of_propagated_proteins      <- length(unique(propagated_proteins$x))
   number_of_proteins_in_sig_custers <- length(unique(V(network_clustered)$name))
   
   plot_1_data <- data.frame("category" = c("PBI Marker Change",
                                            "Propagated Network",
                                            "Final Clusters"),
                             "number_of_proteins" = c(number_of_input_hits,
-                                                     number_of_propagted_proteins,
+                                                     number_of_propagated_proteins,
                                                      number_of_proteins_in_sig_custers))
   
   plot_1_data$category <- factor(plot_1_data$category, levels = plot_1_data$category)
