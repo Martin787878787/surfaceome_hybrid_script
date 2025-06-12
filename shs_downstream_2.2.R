@@ -588,12 +588,13 @@ ppi_str_overall_LUX
 ## Cytoscape / cytoscape piechart highligting =======================================================================================================================================================
 # objective: map LUX and CSC data onto the STRING-pageRank expanded network
 #
-# pageRank_network_propagated_nodes <- read.csv('/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string-0.85-0.97-50-walktrapauto/0.97_network_propagated.csv', header = FALSE)  %>%
-#   rename("entry" = "V1")
 # propagted_proteins.tsv
-pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/intermediate/propagted_proteins.tsv", header = TRUE)                    %>%  rename("entry" = "x")
+# pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/intermediate/propagted_proteins.tsv", header = TRUE)                    %>%  rename("entry" = "x")
+pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/meta_pS700_CP_pBG_2025-05-21/NeA1.3_meta_pS700_CP_pBG-0.85-0.975-50/intermediate/propagated_proteins.tsv", header = TRUE)                    %>%  rename("entry" = "x")
 # propagted_proteins_plus_changes_input.tsv
-pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/intermediate/propagted_proteins_plus_changes_input.tsv", header = TRUE) %>%  rename("entry" = "x")
+# pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/intermediate/propagted_proteins_plus_changes_input.tsv", header = TRUE) %>%  rename("entry" = "x")
+pageRank_network_propagated_nodes <- read.table("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/meta_pS700_CP_pBG_2025-05-21/NeA1.3_meta_pS700_CP_pBG-0.85-0.975-50/intermediate/propagated_proteins_plus_changes_input.tsv", header = TRUE) %>%  rename("entry" = "x")
+
 
 LUX_sig_up <- data_LUX_prot_diff_v31 %>% filter(log2FC > 1 & adj_pvalue <= 0.05) %>% filter(entry %in% unique(pageRank_network_propagated_nodes$entry))
 # write.table(LUX_sig_up %>% dplyr::select(entry) %>% distinct(), "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/LUX_metachanges_up_shs2.22.csv", row.names = FALSE, col.names = FALSE, sep = ",")
@@ -635,9 +636,55 @@ pageRank_plux_CSC <- left_join( # combine log2FC and zscore mapped data
 # combine and export   
 pageRank_mapped_LUX_CSC <- left_join(pageRank_plux_CSC, pageRank_plux_LUX,  by = c("entry", "condition")) %>%
   arrange(entry, match(condition, c("CD4_n", "CD4_nn", "CD8_nn", "CD8_n"))) %>%
-  mutate(pie_LUX = ifelse(LUX == 1, condition, NA))
-write.csv(pageRank_mapped_LUX_CSC, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/pageRank_mapped_LUX_CSC.csv")
+  mutate(pie_LUX = ifelse(LUX == 1, condition, NA)) %>%
+  left_join(proteome %>% dplyr::select(entry, entry_name, gene_names_primary), by = "entry")
+
+# write.csv(pageRank_mapped_LUX_CSC, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/NeA_1.3_string_meta_0.85-0.9295-100-walktrapauto/pageRank_mapped_LUX_CSC.csv")
+write.csv(pageRank_mapped_LUX_CSC, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/meta_pS700_CP_pBG_2025-05-21/NeA1.3_meta_pS700_CP_pBG-0.85-0.975-50_pageRank_mapped_LUX_CSC.csv")
+
 #___________________________________________________________________________________________________________________________________________________________
+
+
+# qid - LUX IDs/subset mapping of CSC data / subset
+LUX_CSC_map <- data_LUX_prot_diff_v31 %>%
+  mutate()
+
+# Extract condition from comparison (first part before "_")
+LUX_CSC_map <- data_LUX_prot_diff_v31 %>%
+  mutate(comparison = case_when(comparison == "nnCD4_TCR_vs_nnCD4_Iso" ~"nnCD4",
+                                comparison == "nCD4_TCR_vs_nCD4_Iso" ~"nCD4",
+                                comparison == "nnCD8_TCR_vs_nnCD8_Iso" ~"nnCD8",
+                                comparison == "nCD8_TCR_vs_nCD8_Iso" ~"nCD8",
+                                TRUE ~ NA)) %>%
+  rename("condition" = "comparison") %>%
+  distinct() %>%
+  left_join(data_CSC_prot_v31 %>%
+              select(entry, condition, log2_median) %>% 
+              filter(log2_median > 0) %>%
+              distinct(),
+            by = c("entry", "condition")) %>%
+  rename(CSC_log2_median = log2_median)
+
+paste0("out of ", nrow(LUX_CSC_map), " LUX-condition datapoints for ", nrow(LUX_CSC_map %>% filter(!is.na(CSC_log2_median))), 
+       " CSC quantitiy exists (# NAs = ", nrow(LUX_CSC_map %>% filter(is.na(CSC_log2_median))), ")")
+
+LUX_CSC_map %>% select(entry, condition, CSC_log2_median) %>% 
+  pivot_wider(id_cols = "entry", names_from = "condition", values_fill = "CSC_log2_median")
+
+LUX_CSC_map_wide <- LUX_CSC_map %>%
+  select(entry, condition, CSC_log2_median) %>%
+  pivot_wider(
+    id_cols = entry,
+    names_from = condition,
+    values_from = CSC_log2_median,
+    values_fill = list(CSC_log2_median = NA)
+  ) %>% 
+  filter(if_all(-entry, ~ !is.na(.))) %>%
+  left_join(proteome %>% select(entry, entry_name), by = "entry")
+
+
+
+
 
 
 

@@ -3,32 +3,32 @@ filter_biogrid_network <- function(biogrid_input_file, changes, network_output_f
   ##### biogrid = https://downloads.thebiogrid.org/File/BioGRID/Release-Archive/BIOGRID-4.4.242/BIOGRID-ALL-4.4.242.mitab.zip  ###################################################################################################################################################
   ## biogrid data type = ppi dataset (protein-protein relationship)
 
-  # #code to get biogrid into right format
-  # biogrid_human  <- read_protti(biogrid_input_file) %>%
-  #   filter(taxid_interactor_a == "taxid:9606" & taxid_interactor_b == "taxid:9606" ) %>%
-  #   # allow only phyiscal / direct interactions (= complex partners or direct binding partner)
-  #   filter(interaction_types %in% c("psi-mi:\"MI:0407\"(direct interaction)", "psi-mi:\"MI:0915\"(physical association)")) %>%                 # unique(biogrid_human$interaction_types) to display categories
-  #   # exclude: "imaging technique" (biochemical)" "(enzymatic study)" "(genetic interference)" "(unspecified method)" "(protein complementation assay)"
-  #   filter(interaction_detection_method %in% c("psi-mi:\"MI:0018\"(two hybrid)", "psi-mi:\"MI:0055\"(fluorescent resonance energy transfer)",  # unique(biogrid_human$interaction_detection_method)
-  #                                   "psi-mi:\"MI:1313\"(bioid)"     , "psi-mi:\"MI:0047\"(far western blotting)",
-  #                                   "psi-mi:\"MI:0004\"(affinity chromatography technology)", "psi-mi:\"MI:0030\"(cross-linking study)",
-  #                                   "psi-mi:\"MI:0096\"(pull down)", "psi-mi:\"MI:0114\"(x-ray crystallography)")
-  #          ) %>%
-  #   dplyr::select(interaction_identifiers, publication_identifiers, interaction_detection_method, interaction_types,  alt_i_ds_interactor_a, alt_i_ds_interactor_b) %>%
-  #   # part below takes long time command takes a long time
-  #   mutate(protein1_entry = str_extract(alt_i_ds_interactor_a, "(?<=swiss-prot:)[^|]+(?=\\|refseq)"),
-  #          protein2_entry = str_extract(alt_i_ds_interactor_b, "(?<=swiss-prot:)[^|]+(?=\\|refseq)")) %>%
-  #   dplyr::select(-c(alt_i_ds_interactor_a, alt_i_ds_interactor_b)) %>%
-  #   select(protein1_entry, protein2_entry) %>%
-  #   # ...
-  #   filter(!is.na(protein1_entry), !is.na(protein2_entry)) %>%  # filter out NAs in mapping ------
-  #   filter(protein1_entry != protein2_entry)                    # filter out self-loops  A = A --
-  # 
-  #  write.csv(biogrid_human, "/Users/mgesell/PhD/local_resources/PPIs_and_complexes/_biogrid_human_filtered_method_and_type.csv", row.names = FALSE)
+  #code to get biogrid into right format
+  biogrid_human  <- read_protti(biogrid_input_file) %>%
+    filter(taxid_interactor_a == "taxid:9606" & taxid_interactor_b == "taxid:9606" ) %>%
+    # allow only phyiscal / direct interactions (= complex partners or direct binding partner)
+    filter(interaction_types %in% c("psi-mi:\"MI:0407\"(direct interaction)", "psi-mi:\"MI:0915\"(physical association)")) %>%                 # unique(biogrid_human$interaction_types) to display categories
+    # exclude: "imaging technique" (biochemical)" "(enzymatic study)" "(genetic interference)" "(unspecified method)" "(protein complementation assay)"
+    filter(interaction_detection_method %in% c("psi-mi:\"MI:0018\"(two hybrid)", "psi-mi:\"MI:0055\"(fluorescent resonance energy transfer)",  # unique(biogrid_human$interaction_detection_method)
+                                    "psi-mi:\"MI:1313\"(bioid)"     , "psi-mi:\"MI:0047\"(far western blotting)",
+                                    "psi-mi:\"MI:0004\"(affinity chromatography technology)", "psi-mi:\"MI:0030\"(cross-linking study)",
+                                    "psi-mi:\"MI:0096\"(pull down)", "psi-mi:\"MI:0114\"(x-ray crystallography)")
+           ) %>%
+    dplyr::select(interaction_identifiers, publication_identifiers, interaction_detection_method, interaction_types,  alt_i_ds_interactor_a, alt_i_ds_interactor_b) %>%
+    # part below takes long time command takes a long time
+    mutate(protein1_entry = str_extract(alt_i_ds_interactor_a, "(?<=swiss-prot:)[^|]+(?=\\|refseq)"),
+           protein2_entry = str_extract(alt_i_ds_interactor_b, "(?<=swiss-prot:)[^|]+(?=\\|refseq)")) %>%
+    dplyr::select(-c(alt_i_ds_interactor_a, alt_i_ds_interactor_b)) %>%
+    select(protein1_entry, protein2_entry) %>%
+    # ...
+    filter(!is.na(protein1_entry), !is.na(protein2_entry)) %>%  # filter out NAs in mapping ------
+    filter(protein1_entry != protein2_entry)                    # filter out self-loops  A = A --
+
+   write.csv(biogrid_human, "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources_biogrid_human_filtered_method_and_type.csv", row.names = FALSE)  # "/Users/mgesell/PhD/local_resources/PPIs_and_complexes/"
   #  # ______________________________________________________________________________________________________________________________________________________
 
   # determine presence of PPI in dataset
-  biogrid_physical <- read.csv("/Users/mgesell/PhD/local_resources/PPIs_and_complexes/_biogrid_human_filtered_method_and_type.csv", header = TRUE)
+  biogrid_physical <- read.csv("/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources_biogrid_human_filtered_method_and_type.csv", header = TRUE)   # "/Users/mgesell/PhD/local_resources/PPIs_and_complexes/_biogrid_human_filtered_method_and_type.csv"
   
   biogrid_physical_inverted_dummy <- biogrid_physical %>%
     mutate(dummy1 = protein1_entry,
@@ -46,11 +46,7 @@ filter_biogrid_network <- function(biogrid_input_file, changes, network_output_f
     ) %>%
     ungroup() %>% 
     ## filtering
-    # check which ppis are present - values can range 0-2  (caluclate number query_entries that occur per protein1_entry and protein2_entry column)
-    mutate(ppi = rowSums(across(starts_with("protein"), ~.x %in% changes))) %>% #   0 neither, 1 one, 2 both interactors identified
-    filter(ppi == 1) %>% # filter for at least one interactors identified 
-    # filter(ppi == 2) %>% # filter for both interactors identified 
-    dplyr::select(-ppi) %>%
+    filter(protein1_entry %in% changes | protein2_entry %in% changes) %>% # at least one match with changes list (point is to add +1 interaction layer later)
     distinct() %>%
     group_by(protein1_entry) %>%
     mutate(

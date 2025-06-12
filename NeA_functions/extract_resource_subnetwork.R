@@ -13,7 +13,7 @@ extract_resource_subnetwork <- function(ppi_network, pageRank_retain_all_changes
   
   # filter for pageRank survivor proteins
   network_interactions_pageRank_filtered <- network_interactions %>%
-    filter(protein1_entry %in% propagated_proteins$x) %>%
+    filter(protein1_entry %in% propagated_proteins$x & protein2_entry %in% propagated_proteins$x ) %>%
     distinct()
   
   ## translate entry name format to desired output (such that in cytoscape or wherever downstream readable names appear)
@@ -30,7 +30,7 @@ extract_resource_subnetwork <- function(ppi_network, pageRank_retain_all_changes
               by = c("protein2_entry" = "entry")) %>%
     rename("protein2_entry_name" = "entry_name", "protein2_gene" = "gene") %>%
     distinct() %>%
-    select(protein1_entry, protein2_entry, protein1_entry_name, protein2_entry_name, protein1_gene, protein2_gene)
+    select(protein1_gene, protein2_gene, protein1_entry, protein2_entry, protein1_entry_name, protein2_entry_name)
   
    # export result network (load into cytoscape via file > import > import from file > then select source and target column)
   write.table(network_interactions_pageRank_filtered  , paste0(result_directory, "intermediate/network_interactions_pageRank_filtered.tsv")     , quote = F , sep = "\t", row.names = F)

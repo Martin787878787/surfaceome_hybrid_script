@@ -1,4 +1,5 @@
 filter_complexPortal_network <- function(complexPortal_input_file, complexPortal_mapping_table_file,
+                                         changes,
                                          network_output_filename){
   
   ##### load data
@@ -56,8 +57,9 @@ filter_complexPortal_network <- function(complexPortal_input_file, complexPortal
     output <- output[-index,]  
   }
   
-  output <- output[, c("protein1_entry", "protein2_entry")]
-  
+  output <- output[, c("protein1_entry", "protein2_entry")] %>% 
+    filter(protein1_entry %in% changes | protein2_entry %in% changes) %>%# at least one match with changes list (point is to add +1 interaction layer later)
+    distinct()
   
   #### export
   write.table(output, paste0(result_directory, "intermediate/", network_output_filename, ".tsv"), quote = F , sep = "\t", row.names = F)

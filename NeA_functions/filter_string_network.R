@@ -6,7 +6,7 @@ filter_string_network <- function(string_network, string_score_cutoff,
  ###############################################################################################################################################################################################
 
   ## step 0: check if required string resource exists - if not download ---------------------------------------------------------------------------------------------------------------------------------------------------------
-  file_path <- paste0("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_",  string_network, "_cutoff", string_score_cutoff, ".csv"  )
+  file_path <- paste0("/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources/_upsp_string_",  string_network, "_cutoff", string_score_cutoff, ".csv"  ) # Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_
   
   # Check if the file exists
   if (!file.exists(file_path)) {
@@ -27,9 +27,9 @@ filter_string_network <- function(string_network, string_score_cutoff,
       rename("entry" = "Entry", "entry_name" = "Entry Name", "gene" = "Gene Names (primary)", "string" = "STRING", "reviewed" = "Reviewed") %>%
       mutate(string = gsub(";", "", string)) 
 
-    write.csv(up_human, "/Users/mgesell/Desktop/currentR/git/shs_resources/_NeA_uniprot_string_ensembl_key.csv", row.names = FALSE)
+    write.csv(up_human,  "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources/_NeA_uniprot_string_ensembl_key.csv", row.names = FALSE)  # /Users/mgesell/Desktop/currentR/git/shs_resources/_NeA_uniprot_string_ensembl_key.csv
     #
-    up_human <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/_NeA_uniprot_string_ensembl_key.csv", header = TRUE)
+    up_human <- read.csv("/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources/_NeA_uniprot_string_ensembl_key.csv", header = TRUE)     # /Users/mgesell/Desktop/currentR/git/shs_resources/_NeA_uniprot_string_ensembl_key.csv
     paste( # FYI
       "Out of", length(unique(up_human$entry)), "proteins, only",
       length(unique(up_human$string)), "string annotated.",
@@ -74,7 +74,7 @@ filter_string_network <- function(string_network, string_score_cutoff,
     upsp_string <- interactions_string_up_human %>%
       dplyr::select(protein1_entry, protein2_entry) %>%
       distinct()
-    write.csv(upsp_string, paste0("/Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_", string_network, "_cutoff", string_score_cutoff, ".csv"),
+    write.csv(upsp_string, paste0("/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources/_upsp_string_", string_network, "_cutoff", string_score_cutoff, ".csv"),  # /Users/mgesell/Desktop/currentR/git/shs_resources/resource_ppi/string/_upsp_string_
               row.names = FALSE)
     
   } # _____________________________________________________________________________________________________________________________________________________________________________________
@@ -87,7 +87,7 @@ filter_string_network <- function(string_network, string_score_cutoff,
     filter(!is.na(protein1_entry) & !is.na(protein2_entry))
   ## step 2: subset string ---------------------------------------------------------------------------------------------------------------------------------------------------------
   string_output <- upsp_string %>% 
-    filter(protein1_entry %in% changes | protein2_entry %in% changes) %>%
+    filter(protein1_entry %in% changes | protein2_entry %in% changes) %>% # at least one match with changes list (point is to add +1 interaction layer later)
     distinct()
   
   ## step 3: export -----------------------------------------------------------------------------------------------------------------------------------------------------------------
