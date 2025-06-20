@@ -113,14 +113,14 @@ paste("Human proteome (upsp 2025-01) comprises", length(unique(proteome_upsp_202
 ##################################################################################################################################################################################################################
 # Chapter 2 ######################################################################################################################################################################################################
 # Figure 2.3.1: CSC LLOQ panT  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-v25_LLOQ_CSC <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_CSC_panT_lowinput/_output_1-2_ludo_adjp_0.7string_shs2.25/data_raw_glyco_nZ_gyIFcsc.csv") %>%
+v25_LLOQ_CSC <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_CSC_panT_lowinput/_output_1-2_ludo_adjp_0.7string_shs2.25/_data_prot_level.csv") %>%
   mutate(condition = gsub("0_5", "0.5", condition)) 
 
 v25_LLOQ_CSC_pep <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_CSC_panT_lowinput/_output_1-2_ludo_adjp_0.7string_shs2.25/data_raw_glyco_nZ_gyIFcsc.csv") %>%
   mutate(condition = gsub("0_5", "0.5", condition))   
 
 # Fig2.3.1_b: CSC Peptides ......................................................................................................................
-Fig2.3.1_b <- v25_LLOQ_CSC %>%
+Fig2.3.1_b <- v25_LLOQ_CSC_pep %>%
   dplyr::select(condition, bio_replicate, peptide_sequence_mod, csc_signature) %>%
   distinct() %>%
   group_by(condition, csc_signature, bio_replicate) %>%
@@ -144,7 +144,7 @@ Fig2.3.1_b <- v25_LLOQ_CSC %>%
   labs(
     title = "Peptides",
     x     = "panT cell input [e6]",
-    y     = "Peptide identifications",
+    y     = "Unique Peptides",
     fill  = "CSC signature"  ) +
   plot_theme()
 
@@ -160,7 +160,7 @@ ggsave(
 
 
 # Fig2.3.1_c: CSC Proteins ......................................................................................................................
-Fig2.3.1_c  <- v25_LLOQ_CSC %>%
+Fig2.3.1_c  <- v25_LLOQ_CSC_pep %>%
   dplyr::select(condition, bio_replicate, entry, csc_signature) %>%
   distinct() %>%
   group_by(condition, csc_signature, bio_replicate) %>%
@@ -184,7 +184,7 @@ Fig2.3.1_c  <- v25_LLOQ_CSC %>%
   labs(
     title = "Proteins",
     x     = "panT cell input [e6]",
-    y     = "Protein identifications",
+    y     = "Unique Proteins",
     fill  = "CSC signature"  ) +
   plot_theme()
 
@@ -200,7 +200,7 @@ ggsave(
 
 
 # Fig2.3.1_d: CSC Precursor Signal ......................................................................................................................
-Fig2.3.1_d <- v25_LLOQ_CSC %>%
+Fig2.3.1_d <- v25_LLOQ_CSC_pep %>%
   filter(csc_signature != "cont") %>%
   group_by(con_rep, csc_signature) %>%
   mutate(TotInt = sum(raw_prec_intensity)) %>%
@@ -244,7 +244,7 @@ ggsave(
 )  
 
 # Fig2.3.1_e: CSC Protein ID data completeness ......................................................................................................................
-Fig2.3.1_e <- v25_LLOQ_CSC %>%
+Fig2.3.1_e <- v25_LLOQ_CSC_pep %>%
   filter(csc_signature == "yes", raw_prec_intensity > 0) %>%
   select(condition, entry, bio_replicate) %>%
   distinct() %>%
@@ -287,7 +287,6 @@ v25_LLOQ_CSC_pep_csc <- v25_LLOQ_CSC_pep %>%
   ungroup()
 
 table(v25_LLOQ_CSC_pep_csc$csc_signature_count) # for most the numer is 1 (1746) only for 13,3 % it is 2 (232)
-table(v25_LLOQ_CSC_pep_csc$csc_peptides_per_protein)
 summary(v25_LLOQ_CSC_pep_csc$csc_peptides_per_protein)
 
 
@@ -332,7 +331,7 @@ ggsave(
   dpi    = 300    # default for good quality
 )  
 
-# Fig2.3.1_g overlap Jurkat CSPA & pT CSC ......................................................................................................................
+# Fig2.3.1_g overlap/upset Jurkat CSPA & pT CSC ......................................................................................................................
 # write.csv(data.frame(Values = CSPA_Jurkat), "/Users/mgesell/Downloads/CSPA_Jurkat.csv", row.names = FALSE)
 # Prepare data in required format
 panT_csc_ids <- v25_LLOQ_CSC %>% 
@@ -343,7 +342,7 @@ panT_csc_ids <- v25_LLOQ_CSC %>%
 upset_data <- bind_rows(
   tibble(entry = CSPA_Jurkat  , set = "Jurkat CSPA"),
   tibble(entry = panT_csc_ids , set = "panT cells") ,
-  tibble(entry = CSPA , set = "CSPA contained") 
+  tibble(entry = CSPA         , set = "CSPA contained") 
   # tibble(entry = intersect(intersect(CSPA, CSPA_Jurkat), panT_csc_ids), # to not display full CSPA but show which proteins already annotate in CSPA  
   #                               set = "CSPA subset"),
   ) %>% 
@@ -384,12 +383,12 @@ cat("\n",
     "Novel panT                     ", length(setdiff(setdiff(panT_csc_ids, CSPA), CSPA_Jurkat))
 )
 # info to write in thesis
-paste("Unique overall CSC PEPTIDES", v25_LLOQ_CSC %>% filter(csc_signature == "yes") %>% pull(peptide_sequence_mod) %>% unique() %>% length() )
-paste("Unique overall CSC PROTEINS", v25_LLOQ_CSC %>% filter(csc_signature == "yes") %>% pull(entry) %>% unique() %>% length() )
+paste("Unique overall CSC PEPTIDES", v25_LLOQ_CSC_pep %>% filter(csc_signature == "yes") %>% pull(peptide_sequence_mod) %>% unique() %>% length() )
+paste("Unique overall CSC PROTEINS", v25_LLOQ_CSC_pep %>% filter(csc_signature == "yes") %>% pull(entry) %>% unique() %>% length() )
 paste("Consider reporting median CV values at least in text")
 
 # =============================================================================================================================================================
-# Figure 2.3.2: TCR-LUX LLOQ panT  ..........................................................................................................................................................................................................................................
+# Figure 2.3.1_i: TCR-LUX LLOQ panT  ..........................................................................................................................................................................................................................................
 v25_LLOQ_LUX_data_prot_diff_abundance <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_LUX_panT_lowinput_TCR/_output_1-2_ludo_adjp_0.7string_shs2.25/_data_prot_diff_abundance.csv") %>%
   arrange(comparison ) %>%
   group_by(entry_name) %>%
@@ -414,56 +413,7 @@ abTCR_chains <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/POI_
   pull(abTCR_chains_cd3_mgmanual)
 TCR_LUX_pois <- c(c("CD4_HUMAN", "CD8A_HUMAN" , "CD8B_HUMAN"), abTCR_chains)
 
-# Figure 2.3.2_b: Volcano plots ..........................................................................................................................................................................................................................................
-
-surfaceome_sigup_table <- v25_LLOQ_LUX_sigup %>%
-  mutate(meta_surfaceome = case_when(entry_name %in% abTCR_chains ~ "CD3_and_TCR", TRUE ~ meta_surfaceome)) %>%
-  # mutate(comparison = gsub("0.5", "0,5", comparison)) %>%
-  group_by(comparison, meta_surfaceome) %>%
-  tally() %>%
-  tidyr::pivot_wider(
-    names_from = meta_surfaceome,
-    values_from = n,
-    values_fill = 0
-  ) %>%
-  mutate(Surfaceome  = (yes        /sum(yes,no,CD3_and_TCR))*100,
-         Other       = (no         /sum(yes,no,CD3_and_TCR))*100,
-         CD3_and_TCR = (CD3_and_TCR/sum(yes,no,CD3_and_TCR))*100,
-         Surface_and_CD3_and_TCR = (sum(yes,CD3_and_TCR)/sum(yes,no,CD3_and_TCR))*100,
-  )
-
-
-
-  #
-ggplot(surfaceome_sigup_table %>%
-         pivot_longer(cols = c(no, yes), names_to = "response", values_to = "count"),
-       aes(x = comparison, y = count, fill = response)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Surfaceome", x = "Comparison", y = "Count") +
-  scale_fill_manual(values = c("no" = "#5F5F61", "yes" = "#cc0000")) +
-  plot_theme()
-
-Fig2.3.1_j <- surfaceome_sigup_table %>%
-  pivot_longer(cols = c(Other, Surfaceome, CD3_and_TCR), names_to = "Annotation", values_to = "count") %>%
-  mutate(Annotation = factor(Annotation, levels = c("Other", "CD3_and_TCR", "Surfaceome"))) %>%
-  ggplot(aes(x = comparison, y = count, fill = Annotation)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Enriched proteins", x = "panT cell input [e6]", y = "Enriched proteins [%]") +
-  scale_fill_manual(values = c("Other" = "darkgrey", "Surfaceome" = "#cc0000", "CD3_and_TCR" = "#0000EE")) +
-  plot_theme()
-
-
-Fig2.3.1_j
-ggsave(
-  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig2.3.1_j.png",
-  plot = Fig2.3.1_j,
-  width  = 10.66,  # document is 16 cm wide             (before 12cm used)
-  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
-  units  = "cm",
-  dpi    = 300    # default for good quality
-)  
-
-# Figure 2.3.2_a: Volcano plots ..........................................................................................................................................................................................................................................
+# Figure 2.3.1_i: Volcano plots ..........................................................................................................................................................................................................................................
 # consider to only display red grey blue purple annotation (surface / non-surface, string-interactors, string&surface )
 filter_log2fc_cutoff            = log(2, 2)   # Cutoff for Volcano plotting
 pvalue                = "adj_pvalue"          # select "pvalue" or "adj_pvalue" depending on how stringend you want to be.   recommendation for CSC is adj_pvalue    
@@ -555,16 +505,18 @@ for (comp_counter in 1:length(loop_frame)) {   # ----------------------- LOOOOOO
   ## For Plotting dataset is separated into different cases
   subset_volcano   <- super_volcano_data[!is.na(super_volcano_data[[pvalue]]), ]    # 1) Fold-chang
 
-  foldchangelimit <- max(abs(v25_LLOQ_LUX_data_prot_diff_abundance$log2FC))
+  foldchangelimit_max <- max(v25_LLOQ_LUX_data_prot_diff_abundance$log2FC)
+  foldchangelimit_min <- min(v25_LLOQ_LUX_data_prot_diff_abundance$log2FC)
+  
   
   subset_volcano <- subset_volcano %>%
     mutate(significance = as.factor(ifelse(-log10(.data[[pvalue]]) >= -log10(filter_sig_cutoff)   &    abs(log2FC) >= filter_log2fc_cutoff,   "yes",   "no")),  # Mark significant hits
            plot_label   = ifelse(.data[[plot_label_volcano]] == "yes", gsub("_HUMAN", "", entry_name), "")) # Assign plot label 
   
   # Helper frame for significance lines
-  segmentation <- data.frame(x = c(-foldchangelimit, filter_log2fc_cutoff, -filter_log2fc_cutoff, filter_log2fc_cutoff),
+  segmentation <- data.frame(x = c(foldchangelimit_min, filter_log2fc_cutoff, -filter_log2fc_cutoff, filter_log2fc_cutoff),
                              y = c(-log10(filter_sig_cutoff), -log10(filter_sig_cutoff), -log10(filter_sig_cutoff), -log10(filter_sig_cutoff)),
-                             xend = c(-filter_log2fc_cutoff, foldchangelimit, -filter_log2fc_cutoff, filter_log2fc_cutoff),
+                             xend = c(-filter_log2fc_cutoff, foldchangelimit_max, -filter_log2fc_cutoff, filter_log2fc_cutoff),
                              yend = c(-log10(filter_sig_cutoff), -log10(filter_sig_cutoff), max(-log10(subset_volcano[[pvalue]])), max(-log10(subset_volcano[[pvalue]]))),
                              col = rep("black", times=4),
                              linetype = rep("dashed", times=4))
@@ -579,7 +531,7 @@ for (comp_counter in 1:length(loop_frame)) {   # ----------------------- LOOOOOO
     geom_segment(x=segmentation$x[2], y=segmentation$y[2], xend=segmentation$xend[2], yend=segmentation$yend[2], linetype="dashed", col="darkgrey", linewidth = 0.4) +
     geom_segment(x=segmentation$x[3], y=segmentation$y[3], xend=segmentation$xend[3], yend=segmentation$yend[3], linetype="dashed", col="darkgrey", linewidth = 0.4) +
     geom_segment(x=segmentation$x[4], y=segmentation$y[4], xend=segmentation$xend[4], yend=segmentation$yend[4], linetype="dashed", col="darkgrey", linewidth = 0.4) +
-    xlim(-foldchangelimit, foldchangelimit) +
+    xlim(foldchangelimit_min, foldchangelimit_max) +
     geom_point(fill = c("#cc66ff", "#cc0000", "#0000EE", "#5F5F61")[match(subset_volcano$suvo_plot_color, c("surface+string", "surface", "string", "other"))],
                shape = ifelse(subset_volcano$imputed_comparison == "yes", 23, 21),
                alpha = subset_volcano$plot_alpha,
@@ -596,25 +548,25 @@ for (comp_counter in 1:length(loop_frame)) {   # ----------------------- LOOOOOO
     xlab(paste("log2(fold change)"   , sep ="")) +
     ylab(paste("-log10(adj. p-value)", sep ="")) +
     geom_label(label= "Iso",
-               x=-foldchangelimit+0.25, y=0,
-               label.padding = unit(0.8, "lines"),
-               label.size = 1.5,
+               x     = foldchangelimit_min+0.7, y=0,
+               label.padding = unit(0.2, "lines"),
+               label.size = 0.5,
                color = "white",
-               fill="black",
-               size = 6) +
+               fill  = "black",
+               size  = 12/.pt) +
     geom_label(label= "TCR",
-               x=foldchangelimit-0.25, y=0,
-               label.padding = unit(0.8, "lines"),
-               label.size = 1.5,
+               x     =  foldchangelimit_max-1.2, y=0,
+               label.padding = unit(0.2, "lines"),
+               label.size = 0.5,
                color = "white",
-               fill="black",
-               size = 6) 
+               fill  = "black",
+               size  = 12/.pt) 
     
-  plot_volcano
+  #  plot_volcano
   ggsave(
     filename = paste0("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig2.3.1_h", count_var, ".png"),
     plot = plot_volcano,
-    width  = 10.66,  # document is 16 cm wide             (before 12cm used)
+    width  = 8.00,  # 10.66,  # document is 16 cm wide             (before 12cm used)
     height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
     units  = "cm",
     dpi    = 300    # default for good quality
@@ -624,77 +576,193 @@ for (comp_counter in 1:length(loop_frame)) {   # ----------------------- LOOOOOO
   
 }
 
-
-
-
-
-
-
-
-
-upset(nsets = ncol(bin_df), order.by = "freq")
-
-
-
-v25_LLOQ_LUX_sigup_poi <- v25_LLOQ_LUX_sigup %>% 
-  filter(entry_name %in% abTCR_chains) 
-
-
-
-
-as.vector(poi_table[[i]][poi_table[[i]] != ""])
-
-# Figure 2.3.2_b: binary map of abTCR chain, CD3 chain and CD4 & CD8 linage marker ID
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Figure 2.3.1_j: Surfaceome contriburtion plots (Volcano sig-up) ..........................................................................................................................................................................................................................................
+surfaceome_sigup_table <- v25_LLOQ_LUX_sigup %>%
+  mutate(meta_surfaceome = case_when(entry_name %in% abTCR_chains[!abTCR_chains %in% c("CD3D_HUMAN", "CD3G_HUMAN", "CD3Z_HUMAN")] ~ "abTCR", TRUE ~ meta_surfaceome)) %>%
+  # mutate(comparison = gsub("0.5", "0,5", comparison)) %>%
+  group_by(comparison, meta_surfaceome) %>%
+  tally() %>%
+  tidyr::pivot_wider(
+    names_from = meta_surfaceome,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(Surfaceome  = (yes    /sum(yes,no,abTCR))*100,
+         Other       = (no     /sum(yes,no,abTCR))*100,
+         abTCR       = (abTCR  /sum(yes,no,abTCR))*100,
+         Surface_and_CD3_and_TCR = (sum(yes,abTCR)/sum(yes,no,abTCR))*100,
+  )
+#
+ggplot(surfaceome_sigup_table %>%
+         pivot_longer(cols = c(no, yes), names_to = "response", values_to = "count"),
+       aes(x = comparison, y = count, fill = response)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Surfaceome", x = "Comparison", y = "Count") +
+  scale_fill_manual(values = c("no" = "#5F5F61", "yes" = "#cc0000")) +
+  plot_theme()
+
+Fig2.3.1_j <- surfaceome_sigup_table %>%
+  pivot_longer(cols = c(Other, Surfaceome, abTCR), names_to = "Annotation", values_to = "count") %>%
+  mutate(Annotation = factor(Annotation, levels = c("Other", "abTCR", "Surfaceome"))) %>%
+  ggplot(aes(x = comparison, y = count, fill = Annotation)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Enriched proteins", x = "panT cell input [e6]", y = "Enriched proteins [%]") +
+  scale_fill_manual(values = c("Other" = "darkgrey", "Surfaceome" = "#cc0000", "abTCR" = "#0000EE")) +
+  plot_theme()
+
+Fig2.3.1_j
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig2.3.1_j.png",
+  plot = Fig2.3.1_j,
+  width  = 10.26,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+# Figure 2.3.1_k: sig up Upset (overlap) ..........................................................................................................................................................................................................................................
+# Figure 2.3.1_l: sig up Upset for QC proteins (TCR chains, CD3, CD4, CD8 id overlap) ..........................................................................................................................................................................................................................................
+upset_data <- bind_rows(
+  # tibble(entry = v25_LLOQ_LUX_sigup %>% filter(comparison == "0.5")  %>% pull(entry) %>% unique(), 
+  #        set = "0.5"),
+  # tibble(entry = v25_LLOQ_LUX_sigup %>% filter(comparison == "1")  %>% pull(entry) %>% unique(), 
+  #        set = "1") ,
+  # tibble(entry = v25_LLOQ_LUX_sigup %>% filter(comparison == "5")  %>% pull(entry) %>% unique(), 
+  #        set = "5")
+  # ) %>% 
+  tibble(entry = v25_LLOQ_LUX_sigup %>% filter(entry_name %in% abTCR_chains[!abTCR_chains %in% c("CD3D_HUMAN", "CD3G_HUMAN", "CD3Z_HUMAN")], comparison == "0.5")  %>% pull(entry) %>% unique(), 
+           set = "0.5"),
+    tibble(entry = v25_LLOQ_LUX_sigup %>% filter(entry_name %in% abTCR_chains[!abTCR_chains %in% c("CD3D_HUMAN", "CD3G_HUMAN", "CD3Z_HUMAN")], comparison == "1")  %>% pull(entry) %>% unique(), 
+           set = "1") ,
+    tibble(entry = v25_LLOQ_LUX_sigup %>% filter(entry_name %in% abTCR_chains[!abTCR_chains %in% c("CD3D_HUMAN", "CD3G_HUMAN", "CD3Z_HUMAN")], comparison == "5")  %>% pull(entry) %>% unique(), 
+           set = "5")
+  ) %>% 
+  group_by(entry) %>% 
+  summarise(sets = list(set)) %>%  # Critical: list column of set memberships
+  ungroup() 
+
+Fig2.3.1_k <- upset_data %>% 
+  ggplot(aes(x = sets)) +
+  geom_bar(fill = "black", color = "white", linewidth = 0.3) +
+  scale_x_upset(
+    sets = c("0.5", "1", "5"),
+    name = "",
+    n_intersections = 20
+  ) +
+  labs(
+    y     = "Intersection",
+    title = "Enrichment Overlap"
+  ) +
+  plot_theme() +
+  theme(axis.text.y = element_text(size = 14))
+
+Fig2.3.1_k
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig2.3.1_k.png",
+  plot = Fig2.3.1_k,
+  width  = 10.66,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+
+# Figure 2.3.1_l: Overlap/upset LUX-sig-up and CSC IDs ..........................................................................................................................................................................................................................................
+upset_data <- bind_rows(
+   tibble(entry = v25_LLOQ_LUX_sigup %>% pull(entry) %>% unique(), 
+          set = "LUX"),
+   tibble(entry = v25_LLOQ_CSC %>% pull(entry) %>% unique(), 
+          set = "CSC"),
+ ) %>% 
+   group_by(entry) %>% 
+   summarise(sets = list(set)) %>%  # Critical: list column of set memberships
+   ungroup() 
+ 
+ Fig2.3.1_l <- upset_data %>% 
+   ggplot(aes(x = sets)) +
+   geom_bar(fill = "black", color = "white", linewidth = 0.3) +
+   scale_x_upset(
+     sets = c("LUX", "CSC"),
+     name = "",
+     n_intersections = 20
+   ) +
+   labs(
+     y     = "Intersection",
+     title = "LUX to CSC Overlap"
+   ) +
+   plot_theme() +
+   theme(axis.text.y = element_text(size = 14))
+
+Fig2.3.1_l
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig2.3.1_l.png",
+  plot = Fig2.3.1_l,
+  width  = 10.66,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+# Figure 2.3.1_m: LUX sig-up vs. CSC signal ..........................................................................................................................................................................................................................................
+v25_LLOQ_LUX_prot_nonzero <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_LUX_panT_lowinput_TCR/_output_1-2_ludo_adjp_0.7string_shs2.25/_data_prot_level.csv") %>%
+  filter(normalised_protein_intensity_log2 > 0)
+
+csc_subset_LUX_05 <- v25_LLOQ_CSC %>% 
+  dplyr::filter(condition == "0.5", 
+                normalised_protein_intensity_log2 > 0,
+                entry %in% (v25_LLOQ_LUX_prot_nonzero %>% dplyr::filter(condition == "TCR_5e5") %>% pull(entry) %>% unique())) %>%
+  mutate(comparison = "0.5",
+         sig_up = case_when(entry %in% (v25_LLOQ_LUX_sigup %>% dplyr::filter(comparison == "0.5") %>% pull(entry) %>% unique()) 
+                            ~ "Yes", TRUE ~ "No"))
+csc_subset_LUX_1  <- v25_LLOQ_CSC %>% 
+  dplyr::filter(condition == "1", 
+                normalised_protein_intensity_log2 > 0,
+                entry %in% (v25_LLOQ_LUX_prot_nonzero %>% dplyr::filter(condition == "TCR_1e6") %>% pull(entry) %>% unique())) %>%
+  mutate(comparison = "1",
+         sig_up = case_when(entry %in% (v25_LLOQ_LUX_sigup %>% dplyr::filter(comparison == "1") %>% pull(entry) %>% unique()) 
+                            ~ "Yes", TRUE ~ "No"))
+csc_subset_LUX_5  <- v25_LLOQ_CSC %>% 
+  dplyr::filter(condition == "5",
+                normalised_protein_intensity_log2 > 0,
+                entry %in% (v25_LLOQ_LUX_prot_nonzero %>% dplyr::filter(condition == "TCR_5e6") %>% pull(entry) %>% unique())) %>%
+  mutate(comparison = "5",
+         sig_up = case_when(entry %in% (v25_LLOQ_LUX_sigup %>% dplyr::filter(comparison == "5") %>% pull(entry) %>% unique()) 
+                            ~ "Yes", TRUE ~ "No"))
+
+csc_subset_LUX <- rbind(csc_subset_LUX_05, csc_subset_LUX_1, csc_subset_LUX_5) %>%
+  dplyr::select(condition, normalised_protein_intensity_log2, sig_up) %>%
+  distinct()
+
+Fig2.3.1_m <- ggplot(csc_subset_LUX, aes(x = condition, y = normalised_protein_intensity_log2, fill = sig_up)) +
+  geom_boxplot(outlier.shape = NA) +
+  labs(title = "CSC signal for LUX IDs",
+       x = "panT cell input [e6]",
+       y = "log2(Norm. protein intensity) ",
+       fill = "Sig-enriched") +
+  scale_fill_manual(values = c("Yes" = "black", "No" = "darkgrey")) + # Customize colors as you like
+  plot_theme()
+
+Fig2.3.1_m
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig2.3.1_m.png",
+  plot = Fig2.3.1_m,
+  width  = 10.66,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+
+
+
+
+
+
+
+
+
+
+
+######## end of functional section ________________________________________________
 
 
