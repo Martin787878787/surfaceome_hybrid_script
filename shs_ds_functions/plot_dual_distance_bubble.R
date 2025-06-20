@@ -1,5 +1,5 @@
 
-plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_value, 
+plot_dual_distance_bubble <- function(data, group_filter, min_recall, max_p_value, 
                                       grouping, term_column, distance_column, distance_method,  # distance parameters
                                       x_var, y_var, size_var, fill_var, title_var) {                             # plot parameters
   
@@ -14,14 +14,14 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_valu
   }
   
   # only terms that meet filter criteria in at least one condition shall be displayed in plot
-  if (is.null(min_p_value)) { # in case no p_value cutoff is specified (for data types where no p-value was calculated e.g. complexes)
+  if (is.null(max_p_value)) { # in case no p_value cutoff is specified (for data types where no p-value was calculated e.g. complexes)
     terms_oi <- data %>%
       filter(!!sym(distance_column) >= min_recall) %>%
       pull(!!sym(term_column)) %>%
       unique()
-  } else { # if min_p_value specified use it for data filtering
+  } else { # if max_p_value specified use it for data filtering
     terms_oi <- data %>%
-      filter(!!sym(distance_column)  >= min_recall & p_value <= min_p_value) %>%
+      filter(!!sym(distance_column)  >= min_recall & p_value <= max_p_value) %>%
       pull(!!sym(term_column)) %>%
       unique()
   }
@@ -127,16 +127,24 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, min_p_valu
       geom_point(aes(size = !!sym(size_var)), shape = 21, color = "darkgrey", fill = "black") +
       scale_size(range = c(0, 10), limits = c(0.33, 1)) +
       labs(x = "Condition", y = "Term", size = "Recall", title = title_var) +
-      theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), panel.grid.minor = element_line(color = "grey", linetype = "dotted")    )
+      theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), 
+            panel.grid.minor = element_line(color = "grey", linetype = "dotted")    ) +
+      plot_theme()
 
   } else {                  # p_value or other continuous column defines color gradient
     plot <-  ggplot(data_ordered,
                     aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var), fill = !!sym(fill_var)), shape = 21, color = "darkgrey") +
       scale_size(range = c(0, 10), limits = c(0.33, 1)) +
-      scale_fill_gradient(low = "firebrick", high = "#fee0d2") +
+      plot_theme()+
+      scale_fill_gradient(low = "firebrick", high = "#fee0d2",
+                          limits = c(0, max_p_value),       # Set consistent bounds (0 to 0.05)
+                          oob = scales::squish,             # Clamp values to limits
+                          na.value = "transparent") +          # Hide true NA values
+                          
       labs(x = "Condition", y = "Term", size = "Recall", title = title_var) +
-      theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), panel.grid.minor = element_line(color = "grey", linetype = "dotted")    )
+      theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), 
+            panel.grid.minor = element_line(color = "grey", linetype = "dotted")    ) 
 
   }
 

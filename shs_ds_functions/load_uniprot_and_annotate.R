@@ -65,7 +65,7 @@ load_uniprot_and_annotate <- function(proteome) {
       string_TCR = ifelse(entry_name %in% string[string$TCR_LUX == 1,]$protein2_entry_name , 1, 0)   # 821 of these 372 in proteome 2025-01-17
     )
   # define pcoi categories (negative so code still works when further pcoi categroies added) for loops
-  pcoi_list <- colnames( proteome %>% select(-c("entry", "reviewed", "entry_name", "protein_names", "gene_names", "organism", "length", 
+  pcoi_list <- colnames( proteome %>% dplyr::select(-c("entry", "reviewed", "entry_name", "protein_names", "gene_names", "organism", "length", 
                                                 "gene_ontology_go", "gene_ontology_biological_process", "gene_ontology_cellular_component", 
                                                 "gene_ontology_molecular_function", "gene_ontology_i_ds", "subcellular_location_cc", "transmembrane", 
                                                 "function_cc", "pathway", "gene_names_primary", "disulfide_bond", "glycosylation", "lipidation", "intramembrane", 
