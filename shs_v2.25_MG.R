@@ -150,7 +150,7 @@ protti_MNAR           = 0.2  # default 0.2   e.g. 0.2x3 -->   < 0.6     # a nume
 protti_min_n_peptides = 1    # greater than condition.   controls developer version of protti::calculate_protein_abundance function:   filter(.data$n_peptides >= min_n_peptides)
 
 # Specify exclcusion/inclusion criteria 
-filter_exclude_files            = c("mgesell_Z_2411_118")       # e.g. c("mgesell_A_2402_186", "mgesell_A_2402_187")
+filter_exclude_files            = c("")       # e.g. c("mgesell_A_2402_186", "mgesell_A_2402_187")
 filter_exclude_protein          = c("contam_", "iRT", "_YEAST", "P22629", "P00761") # use text to filter-out features by protein name;  P22629 = Streptavidin; P00761 = Trypsin
 filter_include_protein          = c("")                        # specifically retain protein protein name;      
 #filter_exclude_quantification  = c("TRUE")                   # !!! DISABLED !!!  (here and below)
