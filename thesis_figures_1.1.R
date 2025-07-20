@@ -98,10 +98,32 @@ paste("Human proteome (upsp 2025-01) comprises", length(unique(proteome_upsp_202
 v25_LLOQ_CSC <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_CSC_panT_lowinput/_output_1-2_ludo_adjp_0.7string_shs2.26/_data_prot_level.csv") %>%
   mutate(condition = gsub("0_5", "0.5", condition)) 
 
-v25_LLOQ_CSC_pep <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_CSC_panT_lowinput/_output_1-2_ludo_adjp_0.7string_shs2.26/data_raw_up_surf_gly_nZ.csv") %>%
-  mutate(condition = gsub("0_5", "0.5", condition))   
+v25_LLOQ_CSC_pep <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_CSC_panT_lowinput/_output_1-2_ludo_adjp_0.7string_shs2.26/_data_feature_level.csv") %>%
+  mutate(condition = gsub("0_5", "0.5", condition)) %>%
+  mutate(N_deam_psm_n = str_count(peptide_sequence_mod,   "N\\[0.9840\\]"))
+
 table(v25_LLOQ_CSC_pep %>% dplyr::filter(csc_signature_psm == "yes", !is.na(ng_sites)) %>%  select(entry, csc_signature_psm_n, peptide_sequence_mod, ng_sites) %>% distinct() %>% pull(csc_signature_psm_n))
 
+# QC of deamidation signatures - how many in NxSTC signature - should be majority otherwise likely chem deam possible too
+NsiteQC <- v25_LLOQ_CSC_pep %>% select(peptide_sequence_mod, N_deam_psm_n, csc_signature_psm_n) %>% 
+  distinct() %>% # keep only unique modified peptides (no charge states)
+  select(-peptide_sequence_mod) %>%
+  pivot_longer(cols = everything(), names_to = "Type", values_to = "Count")
+  
+ggplot(NsiteQC %>%
+         group_by(Type) %>%
+         summarise(Sum = sum(Count)), aes(x = Type, y = Sum, fill = Type)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("N_deam_psm_n" = "#ff7f0e", "csc_signature_psm_n" = "black")) +
+  plot_theme()
+
+bad_csc_sites   <- v25_LLOQ_CSC_pep %>% filter(csc_signature_psm == "no" , N_deam_psm_n >0) %>% select(entry_name, semi_stripped_peptide_sequence, meta_surfaceome, cspa_2015) %>% distinct()
+weird_csc_sites <- v25_LLOQ_CSC_pep %>% filter(csc_signature_psm == "yes", N_deam_psm_n >1) %>% # require at least 2 sites (CSC and non-csc site)
+  select(entry_name, semi_stripped_peptide_sequence, meta_surfaceome, cspa_2015) %>% distinct()
+table(bad_csc_sites$meta_surfaceome)
+table(weird_csc_sites$meta_surfaceome)
+table(bad_csc_sites$cspa_2015)
+table(weird_csc_sites$cspa_2015)
 ##### ________________________________________________________________________________________________________________________________________________________________________________________________
 ######################################################################################################################################################################################################
 
@@ -798,7 +820,7 @@ ggsave(
 
 # Fig2.3.1_o: Overlap/upset LUX-sig-up and CSC IDs ..........................................................................................................................................................................................................................................
 upset_data <- bind_rows(
-   tibble(entry = v25_LLOQ_LUX_sigup %>% pull(entry) %>% unique(), 
+   tibble(entry = v25_LLOQ_LUX_sigup %>% filter(comparison == "1") %>% pull(entry) %>% unique(), 
           set = "LUX"),
    tibble(entry = v25_LLOQ_CSC %>% pull(entry) %>% unique(), 
           set = "CSC"),
@@ -817,7 +839,7 @@ upset_data <- bind_rows(
    ) +
    labs(
      y     = "Intersection",
-     title = "Overall LUX proximities\nvs. CSC signal"
+     title = "1 e6 LUX sig-up\nvs. CSC signal"
    ) +
    plot_theme() +
    theme(axis.text.y = element_text(size = 14))
@@ -920,17 +942,17 @@ AAV_Pillay2016 <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/PO
 AAV_CSC_cell_line <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/AAV_CSC_v2_cell_lines/_output_1-2_ludo_adjp_0.7string_shs2.27/_data_prot_level.csv")
 
 # Hela AAV-SOG timecourse
-AAV_LUX_Hela        <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/AAV_1Y_AAV2-Hela_timecourse/_output_1-2_ludo_adjp_0.7string_shs2.27/_data_prot_level.csv")
-AAV_LUX_Hela_diff   <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/AAV_1Y_AAV2-Hela_timecourse/_output_1-2_ludo_adjp_0.7string_shs2.27/_data_prot_diff_abundance.csv")
+AAV_LUX_Hela        <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/AAV_1Y_AAV2-Hela_timecourse/_output_1-2_no-impute_shs2.27/_data_prot_level.csv")
+AAV_LUX_Hela_diff   <- read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/AAV_1Y_AAV2-Hela_timecourse/_output_1-2_no-impute_shs2.27/_data_prot_diff_abundance.csv")
 #________________________________________________________________________________________________________________________________________________________________________________________________________
 
-### Fig4.3.1d Cell line expression of AAV pois ........................................................................................................
+### Fig4.3.1_a Cell line expression of AAV pois ........................................................................................................
 AAV_CSC_cell_line_poi <- AAV_CSC_cell_line %>%
   filter(entry_name %in% AAV_poi) %>%
   select(condition, entry_name, condition_median_imp_log2_intensity) %>%
   mutate(entry_name = gsub("_HUMAN", "", entry_name))
 
-Fig4.3.1d <-   ggplot(AAV_CSC_cell_line_poi, aes(x = entry_name, y = condition, fill = condition_median_imp_log2_intensity)) +
+Fig4.3.1_a <-   ggplot(AAV_CSC_cell_line_poi, aes(x = entry_name, y = condition, fill = condition_median_imp_log2_intensity)) +
   geom_tile(color = "white", linewidth = 0.3) +  # Add white borders between tiles
   scale_fill_gradient(
     name = "log2(median\nprotein intensity)", 
@@ -939,37 +961,104 @@ Fig4.3.1d <-   ggplot(AAV_CSC_cell_line_poi, aes(x = entry_name, y = condition, 
   labs(
     x = "Protein", 
     y = "Cell line", 
-    title = "CSC protein signal for known AAV interactors"  ) +
+    title = "CSC protein signal\nfor known AAV interactors"  ) +
   plot_theme() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1.0),  # Rotate x-axis labels
     plot.title = element_text(hjust = 0.5),  # Center title
     panel.grid = element_blank()  # Remove grid lines
   )
-Fig4.3.1d
+Fig4.3.1_a
 ggsave(
-  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1d.png",
-  plot = Fig4.3.1d,
-  width  = 30,  # document is 16 cm wide             (before 12cm used)
-  height = 9,  # 4/3 width/high ratio is common      (before 8 cm used)
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1_a.png",
+  plot = Fig4.3.1_a,
+  width  = 17,  # document is 16 cm wide             (before 12cm used)
+  height = 8,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
   dpi    = 300    # default for good quality
 ) 
 
-### Fig4.3.1g LUX AAV poi protein signal  ........................................................................................................
+### Fig4.3.1_b Cell line expression of AAV pois ........................................................................................................
+# overlap of glyco IDs for the 4 CSC profiled cell lines
+upset_data <- bind_rows(
+  tibble(entry = AAV_CSC_cell_line %>% filter(condition == "HeLa", imputed_prot_intensity_log2 > 0) %>% pull(entry) %>% unique(), 
+         set = "HeLa"),
+  tibble(entry = AAV_CSC_cell_line %>% filter(condition == "HepG2", imputed_prot_intensity_log2 > 0) %>% pull(entry) %>% unique(),         
+         set = "HepG2"),
+  tibble(entry = AAV_CSC_cell_line %>% filter(condition == "K562", imputed_prot_intensity_log2 > 0) %>% pull(entry) %>% unique(),        
+         set = "K562"),
+  tibble(entry = AAV_CSC_cell_line %>% filter(condition == "HEK", imputed_prot_intensity_log2 > 0) %>% pull(entry) %>% unique(), 
+         set = "HEK") 
+  # tibble(entry = intersect(intersect(CSPA, CSPA_Jurkat), panT_csc_ids), # to not display full CSPA but show which proteins already annotate in CSPA  
+  #                               set = "CSPA subset"),
+) %>% 
+  group_by(entry) %>% 
+  summarise(sets = list(set)) %>%  # Critical: list column of set memberships
+  ungroup() 
+
+Fig4.3.1_b <- upset_data %>% 
+  ggplot(aes(x = sets)) +
+  geom_bar(fill = "black", color = "white", linewidth = 0.3) +
+  scale_x_upset(
+    sets = c("HeLa", "HepG2", "K562", "HEK"),
+    name = "",
+    n_intersections = 20
+  ) +
+  labs(
+    y     = "Intersection",
+    title = "Protein Overlap"
+  ) +
+  plot_theme() +
+  theme(axis.text.y = element_text(size = 14))
+
+Fig4.3.1_b
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1_b.png",
+  plot = Fig4.3.1_b,
+  width  = 9,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+
+### Fig4.3.1_h LUX AAV poi protein signal  ........................................................................................................
+# # median signal of meta_surfaceome proteins (surfaceome abundance control for heatmaps)
+# AAV_LUX_Hela_median_surfaceome_intensity_per_condition <- AAV_LUX_Hela %>%
+#   filter(meta_surfaceome == "yes") %>%
+#   select(entry_name, condition, condition_median_imp_log2_intensity) %>%
+#   group_by(condition) %>%
+#   mutate(condition_median_imp_log2_intensity = median(condition_median_imp_log2_intensity,  na.rm = TRUE),
+#          entry_name = "median_surface_ctrl") %>%
+#   ungroup() %>%
+#   distinct()
+# median signal of CSC identified HeLA proteins (surfaceome abundance control for heatmaps)
+AAV_LUX_Hela_median_CSCidentified_intensity_per_condition <- AAV_LUX_Hela %>%
+  filter(entry_name %in% (AAV_CSC_cell_line %>% filter(condition == "HeLa") %>% pull(entry_name) %>% unique())) %>%
+  select(entry_name, condition, condition_median_imp_log2_intensity) %>%
+  group_by(condition) %>%
+  mutate(condition_median_imp_log2_intensity = median(condition_median_imp_log2_intensity,  na.rm = TRUE),
+         entry_name = "median_CSC") %>%
+  ungroup() %>%
+  distinct()
+
 AAV_LUX_Hela <- AAV_LUX_Hela %>%
   select(condition, entry_name, condition_median_imp_log2_intensity) %>%
-  mutate(condition = factor(condition, levels = rev(c("10_NL", "10", "20", "30", "40", "60")))) %>%
+  rbind(AAV_LUX_Hela_median_CSCidentified_intensity_per_condition) %>%
+  # rbind(AAV_LUX_Hela_median_surfaceome_intensity_per_condition) %>%
+  mutate(condition  = factor(condition , levels = rev(c("10_NL", "10", "20", "30", "40", "60")))) %>%
   # for 0-1 scaling:
   group_by(entry_name) %>%
   mutate(normalized_expression = percent_rank(condition_median_imp_log2_intensity)) %>%
   ungroup()
 
 AAV_LUX_Hela_poi <- AAV_LUX_Hela %>%
-  filter(entry_name %in% c(AAV_poi, "CAPSD_AAV2S"), condition != "") %>%
-  mutate(entry_name = gsub("_HUMAN", "", entry_name))
+  filter(entry_name %in% c(AAV_poi, "CAPSD_AAV2S", "median_surface_ctrl", "median_CSC"), condition != "") %>%
+  mutate(entry_name = gsub("_HUMAN"     , ""        , entry_name),
+         entry_name = gsub("CAPSD_AAV2S", "AAV2-VP1", entry_name),
+         entry_name = factor(entry_name,  levels = c("median_CSC", sort(setdiff(unique(entry_name), "median_CSC")))))
 
-Fig4.3.1g <-   ggplot(AAV_LUX_Hela_poi, aes(x = entry_name, y = condition, fill = normalized_expression)) +
+Fig4.3.1_h <-   ggplot(AAV_LUX_Hela_poi, aes(x = entry_name, y = condition, fill = normalized_expression)) +
   geom_tile(color = "white", linewidth = 0.3) +  # Add white borders between tiles
   scale_fill_gradient(
     name = "Normalized log2\n(median protein\nintensity)", 
@@ -985,12 +1074,12 @@ Fig4.3.1g <-   ggplot(AAV_LUX_Hela_poi, aes(x = entry_name, y = condition, fill 
     plot.title = element_text(hjust = 0.5),  # Center title
     panel.grid = element_blank()  # Remove grid lines
   )
-Fig4.3.1g
+Fig4.3.1_h
 ggsave(
-  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1g.png",
-  plot = Fig4.3.1g,
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1_h.png",
+  plot = Fig4.3.1_h,
   width  = 30,  # document is 16 cm wide             (before 12cm used)
-  height = 8,  # 4/3 width/high ratio is common      (before 8 cm used)
+  height = 9,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
   dpi    = 300    # default for good quality
 ) 
@@ -999,7 +1088,7 @@ AAV_LUX_Hela_poi_pillay <- AAV_LUX_Hela %>%
   filter(entry_name %in% AAV_Pillay2016, condition != "") %>%
   mutate(entry_name = gsub("_HUMAN", "", entry_name))
 
-Fig4.3.1h <-   ggplot(AAV_LUX_Hela_poi_pillay, aes(x = entry_name, y = condition, fill = normalized_expression)) +
+Fig4.3.1_i <-   ggplot(AAV_LUX_Hela_poi_pillay, aes(x = entry_name, y = condition, fill = normalized_expression)) +
   geom_tile(color = "white", linewidth = 0.3) +  # Add white borders between tiles
   scale_fill_gradient(
     name = "Normalized log2\n(median protein\nintensity)", 
@@ -1015,10 +1104,10 @@ Fig4.3.1h <-   ggplot(AAV_LUX_Hela_poi_pillay, aes(x = entry_name, y = condition
     plot.title = element_text(hjust = 0.5),  # Center title
     panel.grid = element_blank()  # Remove grid lines
   )
-Fig4.3.1h
+Fig4.3.1_i
 ggsave(
-  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1h.png",
-  plot = Fig4.3.1h,
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1_i.png",
+  plot = Fig4.3.1_i,
   width  = 30,  # document is 16 cm wide             (before 12cm used)
   height = 8,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
@@ -1039,7 +1128,7 @@ AAV_LUX_Hela_poi_go <- AAV_LUX_Hela %>%
   filter(entry_name %in% AAV_go_poi) %>%
   mutate(entry_name = gsub("_HUMAN", "", entry_name))
 
-Fig4.3.1i <-   ggplot(AAV_LUX_Hela_poi_go, aes(x = entry_name, y = condition, fill = normalized_expression)) +
+Fig4.3.1_j <-   ggplot(AAV_LUX_Hela_poi_go, aes(x = entry_name, y = condition, fill = normalized_expression)) +
   geom_tile(color = "white", linewidth = 0.3) +  # Add white borders between tiles
   scale_fill_gradient(
     name = "Normalized log2\n(median protein\nintensity)", 
@@ -1055,10 +1144,10 @@ Fig4.3.1i <-   ggplot(AAV_LUX_Hela_poi_go, aes(x = entry_name, y = condition, fi
     plot.title = element_text(hjust = 0.5),  # Center title
     panel.grid = element_blank()  # Remove grid lines
   )
-Fig4.3.1i
+Fig4.3.1_j
 ggsave(
-  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1i.png",
-  plot = Fig4.3.1i,
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig4.3.1_j.png",
+  plot = Fig4.3.1_j,
   width  = 30,  # document is 16 cm wide             (before 12cm used)
   height = 8,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",

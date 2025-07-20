@@ -18,7 +18,7 @@
 ####################################################################################################################################
 rm(list = ls())           # Purge workspace
 set.seed(123)
-script_version = "_shs2.26" # version stamp on output directory
+script_version = "_shs2.27" # version stamp on output directory
 # 2.7   2024-07-29    add lux signature filter + corrected signature filtering (before not effectively due to usage of wrong df ... - not bad because no glyco anlysed recently)
 # 2.8   2024-07-29    supervolcano - removal of missing degree of freedem middle plot (only required when non-limma t-test is used. limma now default >> kick out)
 # 2.9   2024-07-30    Surface and Intracellular replaced with yes and no; supervolcano - CV based unique hit scatters
@@ -95,9 +95,9 @@ csc_filter_stringency = "consider_ONLY_nglyco_peptides"  # applied only when CSC
 lux_filter_stringency = ""    # "lux_signature_peptides_only", "gLUX_SOG_483_signature_psm"  to .... ; usually keep "" or "non"
 # stringent filter = highest data quality but missing values (loss of any non-glycosilated peptides for quantification)
 qc_reference          = "meta_surfaceome" #choose one reference: cspa_2015  surfy_2018   tcsa_2021  uniprot_2023  cd_antigen   meta_surfaceome (= cspa_2015surfy_2018tcsa_2021cd_antigen_veneer_proteome_high)
-poi_plotting_lists    = c("AAV2_poi", "AAV2_Pillay2016", "tetraspanins_galectins", "CD_antigen", "CSPA2015_Surfy2018_TCSA_2021_Cdantigen_VeneerProteome_High")  # select one colnames(poi):  
-# poi_plotting_lists    = c("CPIs", "BindingBlockListPharmacoscopy_shilts2022_fig4d", "abTCR_chains_cd3_mgmanual",
-#                           "Tact_markers", "Thermo_Marker_Tsubset", "tcr_signaling_GO.0050852", "LUX_targets.CPIs", "tetraspanins_galectins")  # select one colnames(poi):  
+# poi_plotting_lists    = c("AAV2_poi", "AAV2_Pillay2016", "tetraspanins_galectins", "CD_antigen", "CSPA2015_Surfy2018_TCSA_2021_Cdantigen_VeneerProteome_High")  # select one colnames(poi):  
+poi_plotting_lists    = c("CPIs", "BindingBlockListPharmacoscopy_shilts2022_fig4d", "abTCR_chains_cd3_mgmanual",
+                          "Tact_markers", "Thermo_Marker_Tsubset", "tcr_signaling_GO.0050852", "LUX_targets.CPIs", "tetraspanins_galectins")  # select one colnames(poi):
 # hot lists:              "LUX_targets.CPIs"	"POI_Ben"	"FACS_candidates"	"Tcell_Act_GO.0042110"	"Bcell_Act_GO.0042113"
 # Markers:                "Thermo_Marker_Tact"(1000)	"Thermo_Marker_Tsubset"	"Tact_markers" "BindingBlockListPharmacoscopy_shilts2022_fig4d"
 # Surface Annotations:    "cspa_2015"	"surfy_2018"	"tcsa_2021"	"uniprot_2023"	"cd_antigen"	"VeneerProteome_High"	"CSPA2015_Surfy2018_TCSA_2021_Cdantigen_VeneerProteome_High"
@@ -311,6 +311,7 @@ uniprot <-  # retrieve desiered info for identified proteins
                 entry_name = id) %>%
   dplyr::select(-input_id)
 
+message("If below block errors with modified sequence / stripped sequence step check whether data_type paramter correctly set(DDA or DIA)")
 data_raw_up <- data_raw %>%    # merge uniprot info and data table 
   left_join(
     y = uniprot[, c("entry", "entry_name", "sequence", "protein_name")], # at this point only add subset of uniprot info (otherwise unnecessarily inflated intermediate dataframes)
@@ -691,6 +692,7 @@ dev.off()
 
 # csc site mapping / N-glyco summary (Ng) ____________________________________________
 if (experiment_type == "peptideCSC") {
+  message("analysing Ng csc sites")
   evaluate_csc_sites_result <- evaluate_csc_sites(csc_output__data_raw_up_surf_gly_nZ = data_raw_up_surf_gly_nZ)
   csc_sites_plus_upsp_annotation       <- evaluate_csc_sites_result[[1]]
   novel_Ng_proteins_surface_annotated  <- evaluate_csc_sites_result[[2]]
@@ -712,8 +714,15 @@ if (experiment_type == "peptideCSC") {
     plot_theme()+   # Hide x-axis text)
     theme(axis.text.x = element_blank())
   Fig2.3.1_i
-} # ________________________________________________________________________________________________________________________
-
+  ggsave(
+    filename = paste0(output_directory, "/_CSC_Ng_summary.png"),
+    plot = Fig2.3.1_i,
+    width  = 9,  # document is 16 cm wide             (before 12cm used)
+    height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+    units  = "cm",
+    dpi    = 300    # default for good quality
+  )  
+} # ___
 ## DATA FILTERING - according to specifications on -------------------------------------------------------------------------------------------------------------
 data_raw_pre_filtered <- data_raw_up_surf_nZ_glyF
 includeFeature = rep(TRUE, nrow(data_raw_pre_filtered))
