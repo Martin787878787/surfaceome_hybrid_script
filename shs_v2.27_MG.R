@@ -156,7 +156,7 @@ protti_min_n_peptides = 1    # greater than condition.   controls developer vers
 
 # Specify exclcusion/inclusion criteria 
 filter_exclude_files            = c("")       # e.g. c("mgesell_A_2402_186", "mgesell_A_2402_187")
-filter_exclude_protein          = c("contam_", "iRT", "_YEAST", "P22629", "P00761") # use text to filter-out features by protein name;  P22629 = Streptavidin; P00761 = Trypsin
+filter_exclude_protein          = c("contam_", "iRT", "_YEAST", "P22629", "P00761", "Q7M135") # use text to filter-out features by protein name;  P22629 = Streptavidin; P00761 = Trypsin "LYSC_LYSEN"
 filter_include_protein          = c("")                        # specifically retain protein protein name;      
 #filter_exclude_quantification  = c("TRUE")                   # !!! DISABLED !!!  (here and below)
 filter_include_peptideSequence  = c()                          # use regular expression to filter-in features by peptide sequence, e.g: c("N[^P][ST]")
@@ -2115,14 +2115,15 @@ svcp_L_sigupuni <- super_volcano_candi_prot_L %>%
   left_join(proteome %>% dplyr::select("entry", "gene_ontology_i_ds"), #  add go term info
             by = "entry") %>%
   mutate(   # annotate surfaceome categories of interest (extend list if needed and communicate suggestion to Martin)
-    tcr_signaling_plus       = as.integer(str_detect(gene_ontology_i_ds, "GO:0050852")),
+    tcr_signaling            = as.integer(str_detect(gene_ontology_i_ds, "GO:0050852")),
+    tcr_signaling_plus       = as.integer(str_detect(gene_ontology_i_ds, "GO:0050862")),
     tcr_signaling_minus      = as.integer(str_detect(gene_ontology_i_ds, "GO:0050860")),
-    t_act_plus               = as.integer(str_detect(gene_ontology_i_ds, "GO:0042110")),
+    t_act                    = as.integer(str_detect(gene_ontology_i_ds, "GO:0042110")),
+    t_act_plus               = as.integer(str_detect(gene_ontology_i_ds, "GO:0050870")),
     t_act_minus              = as.integer(str_detect(gene_ontology_i_ds, "GO:0050868")),
     
     receptor_complex         = as.integer(str_detect(gene_ontology_i_ds, "GO:0043235")),
     receptor_clustering      = as.integer(str_detect(gene_ontology_i_ds, "GO:0043113")),
-    receptor_transactivation = as.integer(str_detect(gene_ontology_i_ds, "GO:0035624")),
     receptor_internalization = as.integer(str_detect(gene_ontology_i_ds, "GO:0031623")),
     receptor_recycling       = as.integer(str_detect(gene_ontology_i_ds, "GO:0001881")),
     receptor_metabolism      = as.integer(str_detect(gene_ontology_i_ds, "GO:0043112")),
