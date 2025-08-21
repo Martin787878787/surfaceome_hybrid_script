@@ -1351,15 +1351,19 @@ GO_descendants_df <- go_children_table_generator2(my_terms = c("GO:0036398", "GO
                                          "GO:0000151", "GO:0061630", "GO:0005215", "GO:0008233", "GO:0042105", "GO:0005085", "GO:0005096", "GO:0003924",
                                          "GO:0007165", "GO:0004672", "GO:0004721", "GO:0004930", "GO:0003823", "GO:0042611", "GO:0019838", "GO:0004896",
                                          "GO:0006955", "GO:0007155", "GO:0005178", "GO:0005215", "GO:0005216", "GO:0016787", "GO:0016491", "GO:0006915",
-                                         "GO:0045454", "GO:0031295", "GO:0140359", "GO:0023052", "GO:0035591", "GO:0097197"
+                                         "GO:0045454", "GO:0031295", "GO:0140359", "GO:0023052", "GO:0035591", "GO:0097197", "GO:0002684", "GO:0002683", 
+                                         "GO:0007166"
                                          ), only_new = TRUE) # define whether only new terms should be searched and appended to df. otherwise full serach - which takes long
 ## load resources ...........
 GO_descendants_df     <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/GO_term_children/GO_term_children.csv", header = TRUE , check.names = FALSE)
+
 protein_family_df     <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/protein_families/human_upsp_proteinfamilies_2025_07_23.csv", header = TRUE) %>% 
   dplyr::rename("protein_families" = "Protein.families", "entry" = "Entry")
+
 string_uniprot_mapping <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/string_uniprot_ENSP_mapping/stringTOupsp_human_20250801.csv", header = TRUE) %>%
   dplyr::select(Entry, STRING) %>% dplyr::rename("entry" = "Entry", "ENSPid_string" = "STRING") %>%
   mutate(ENSPid_string = gsub(";", "", ENSPid_string))
+
 proteome_domain <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/protein_domains/domains_upsp_20250801.csv", header = TRUE) %>%
   dplyr::select(Entry, Domain..CC., Domain..FT.) %>%
   dplyr::rename("entry" = "Entry", "domains_cc" = "Domain..CC.", "domains" = "Domain..FT.") %>%
@@ -1367,7 +1371,9 @@ proteome_domain <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/p
          ITAM = ifelse(str_detect(domains, "ITAM") | str_detect(domains_cc, "ITAM"), "Yes", "No"),
          ITSM = ifelse(str_detect(domains, "ITSM") | str_detect(domains_cc, "ITSM"), "Yes", "No"),
          ITxM = ifelse(ITIM == "Yes" | ITAM == "Yes" |ITSM == "Yes", "Yes", "No")) 
-poi_table        <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/POI_lists/POI_lists.csv", header = TRUE)
+
+poi_table       <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/POI_lists/POI_lists.csv", header = TRUE)
+
 immune_diseases <- str_c(  c("autoimmunity", "immunodeficiency", "impaired immune", "B cell deficiency", "T cell deficiency", "auto-inflammatory",
                              "immune dysregulation", "rheuma", "diabetes", "lupus", "graves", "addison", "Sjögren", "psoriasis", "bowel", "arteritis", "vasculitides", "celiac", "allergic", 
                              "leukemia", "lymphopenia", "hypogammaglobulinemia", "lymphoma", "T cell disorders", "Kaposi sarcoma", "Multiple sclerosis", "Hashimoto", "Myasthenia", "Pernicious", "Antiphospholipid",
@@ -1376,8 +1382,12 @@ immune_diseases <- str_c(  c("autoimmunity", "immunodeficiency", "impaired immun
                          collapse = "|")
 proteome_immune_disease <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/protein_disease/upsp_disease_2025-08-04.csv", header = TRUE) %>%
   dplyr::rename("entry" = "Entry", "entry_name" = "Entry.Name", "disease" = "Involvement.in.disease") %>%
-  mutate(immune_disease = case_when(str_detect(disease, regex(immune_diseases, ignore_case = TRUE)) ~ "Yes", TRUE ~"No")) 
-# %>%  filter(immune_disease == "Yes")
+  mutate(immune_disease = case_when(str_detect(disease, regex(immune_diseases, ignore_case = TRUE)) ~ "Yes", TRUE ~"No"))
+
+proteome_drug_20250804 <- proteome_20250804 %>%
+  dplyr::select(entry,  drugbank, drugcentral) %>%
+  mutate(drug_target    = case_when(drugbank != "" |  drugcentral != "" ~ "Yes", TRUE ~"No"))
+table(proteome_drug_20250804$drug_target)
 
 APMS_TCR_ppis <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/publications/TCR_co-ip_literature.csv", header = TRUE) 
 # [1] "APMS_Romain2022_CD3z_FC2"           "APMS_Romain2022_CD3z_FC10"          "APMS_Romain2022_ZAP70_FC2"          "APMS_Romain2022_ZAP70_FC10"        
@@ -1445,7 +1455,8 @@ cytoscape_info_annotation <- v31_LUX_data_prot_diff_abundance_sigup %>%
   left_join(protein_family_df      %>% dplyr::select(entry, protein_families)   , by = "entry") %>% # annotate subset so when removing subsed edges there is still way to select subset nodes
   left_join(proteome_upsp_202501   %>% dplyr::select(entry, protein_names, gene_names_primary, function_cc, gene_ontology_molecular_function, gene_ontology_i_ds), by = "entry")  %>%
   left_join(string_uniprot_mapping, by = "entry") %>% # allows to add nodes by string id into network 
-  left_join(proteome_immune_disease %>% dplyr::select(entry, immune_disease), by = "entry") # allows to add nodes by string id into network 
+  left_join(proteome_immune_disease %>% dplyr::select(entry, immune_disease), by = "entry") %>% # allows to add nodes by string id into network 
+  left_join(proteome_drug_20250804  %>% dplyr::select(entry, drug_target)   , by = "entry") # allows to add nodes by string id into network 
 
   
 ## mapping cytoscape values ----------------
@@ -1462,7 +1473,10 @@ cytoscape_info_annotation_go <- cytoscape_info_annotation  %>%
                 t_act_plus               = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`positive regulation of T cell activation` %>% na.omit())), "Yes", "No"),
                 t_act_minus              = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`negative regulation of T cell activation` %>% na.omit())), "Yes", "No"),
                 t_co_stim                = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`T cell costimulation` %>% na.omit())), "Yes", "No"),
+                ISP_reg_plus             = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`positive regulation of immune system process` %>% na.omit())), "Yes", "No"),
+                ISP_reg_minus            = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`negative regulation of immune system process` %>% na.omit())), "Yes", "No"),
                 
+                surfaceome_receptor_sign = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`cell surface receptor signaling pathway` %>% na.omit())), "Yes", "No"),
                 receptor_complex         = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`receptor complex` %>% na.omit())), "Yes", "No"),
                 receptor_clustering      = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`receptor clustering` %>% na.omit())), "Yes", "No"),
                 receptor_internalization = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`receptor internalization` %>% na.omit())), "Yes", "No"),
@@ -1523,13 +1537,15 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
     ITSM         = ifelse(entry %in% c(proteome_domain %>% dplyr::filter(ITSM == "Yes") %>% pull(entry) %>% unique()), "Yes", "No"),
     ITxM         = ifelse(entry %in% c(proteome_domain %>% dplyr::filter(ITxM == "Yes") %>% pull(entry) %>% unique()), "Yes", "No"),
     # APMS TCR ppis
-    APMS_CD3z_FC2         = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$CD3z_NS_Romain2022_FC2)     , "Yes", "No"),
-    APMS_CD3e_FC2         = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$CD3e_NS_Romain2019_FC2)     , "Yes", "No"),
-    APMS_ZAP70_FC2        = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$ZAP70_NS_Romain2022_FC2)    , "Yes", "No"),
-    APMS_Lck              = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$Lck_NS_Romain2019_FC2)      , "Yes", "No"),
+    APMS_CD3z_FC2         = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$CD3z_NS_Romain2022_FC2)   , "Yes", "No"),
+    APMS_CD3e_FC2         = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$CD3e_NS_Romain2019_FC2)   , "Yes", "No"),
+    APMS_ZAP70_FC2        = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$ZAP70_NS_Romain2022_FC2)  , "Yes", "No"),
+    APMS_Lck              = ifelse(tolower(gene_names_primary) %in% tolower(APMS_TCR_ppis$Lck_NS_Romain2019_FC2)    , "Yes", "No"),
     APMS_FC2_overlap_count= rowSums( across( c(APMS_CD3z_FC2, APMS_CD3e_FC2, APMS_ZAP70_FC2, APMS_Lck),~ . == "Yes")),
+    APMS_combined_NS_CD3  = ifelse(#APMS_FC2_overlap_count >= 2 & # for now trust 1-time hits
+      tolower(gene_names_primary) %in% unique(c(tolower(APMS_TCR_ppis$CD3e_NS_Romain2019_FC2) , tolower(APMS_TCR_ppis$CD3z_NS_Romain2022_FC2)))     , "Yes", "No"),
     APMS_combined_NS      = ifelse(#APMS_FC2_overlap_count >= 2 & # for now trust 1-time hits
-                                     tolower(gene_names_primary) %in% unique(c(tolower(APMS_TCR_ppis$Lck_NS_Romain2019_FC2)     , tolower(APMS_TCR_ppis$CD3e_NS_Romain2019_FC2)      , tolower(APMS_TCR_ppis$CD3z_NS_Romain2022_FC2)     , tolower(APMS_TCR_ppis$ZAP70_NS_Romain2022_FC2))),"Yes", "No"),
+                                     tolower(gene_names_primary) %in% unique(c(tolower(APMS_TCR_ppis$Lck_NS_Romain2019_FC2)     , tolower(APMS_TCR_ppis$CD3e_NS_Romain2019_FC2)      , tolower(APMS_TCR_ppis$CD3z_NS_Romain2022_FC2)   , tolower(APMS_TCR_ppis$ZAP70_NS_Romain2022_FC2)))     , "Yes", "No"),
     APMS_combined_meta    = ifelse(#APMS_FC2_overlap_count >= 2 & # for now trust 1-time hits
                                    tolower(gene_names_primary) %in% unique(c(tolower(APMS_TCR_ppis$Lck_anytime_Romain2019_FC2), tolower(APMS_TCR_ppis$CD3e_allStim_Romain2019_FC2) , tolower(APMS_TCR_ppis$CD3z_allStim_Romain2022_FC2), tolower(APMS_TCR_ppis$ZAP70_allStim_Romain2022_FC2))), "Yes", "No"),
     # poi table based
@@ -1539,9 +1555,9 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
     abTCR_and_CD3_chains  = ifelse(entry_name %in% abTCR_chains      , "Yes", "No"),
          meta_surfaceome       = ifelse(entry      %in% surface_annotations$cspa_2015surfy_2018tcsa_2021cd_antigen_veneer_proteome_high, "Yes", "No"),
            # string interactor types ~ outline width
-    string_AB_physical_400   = ifelse(entry %in% string_AB_physical_400, 10, 1),   # border width
-    string_AB_full_400       = ifelse(entry %in% string_AB_full_400    , 10, 1),   # border width string_AB_full_400
-    string_AB_full_700       = ifelse(entry %in% string_AB_full_700    , 10, 1),   # border width string_AB_full_400
+    string_AB_physical_400   = ifelse(entry %in% string_AB_physical_400, 10, 3),   # border width
+    string_AB_full_400       = ifelse(entry %in% string_AB_full_400    , 10, 3),   # border width string_AB_full_400
+    string_AB_full_700       = ifelse(entry %in% string_AB_full_700    , 10, 3),   # border width string_AB_full_400
     meta_tcr_signaling = case_when(
               tcr_signaling_plus  == "Yes" & tcr_signaling_minus == "Yes" ~ "Dual Role", # DEFINE FIRST - will pick first match so order important- account for dual roles
               tcr_signaling_plus  == "Yes"  ~ "Plus",
@@ -1552,27 +1568,32 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
               t_act_plus  == "Yes" ~ "Plus",
               t_act_minus == "Yes" ~ "Minus",
               TRUE ~ "Other"),
+    meta_ISP = case_when(
+              ISP_reg_plus  == "Yes" & ISP_reg_minus == "Yes" ~"Dual Role", # DEFINE FIRST - will pick first match so order important- account for dual roles
+              ISP_reg_plus  == "Yes" ~ "Plus",
+              ISP_reg_minus == "Yes" ~ "Minus",
+              TRUE ~ "Other"),
     cytoscape_shape = case_when(
-           kinase == "Yes" | phosphatase == "Yes"                               ~ "DIAMOND",  # signaling modulators
-           ubiquitin_ligase == "Yes" | ubiquitin_ligase_complex   == "Yes"      ~ "PARALLELOGRAM",
-           GTPase == "Yes" |  GAP == "Yes" | GEF == "Yes"                       ~ "HEXAGON",  # signaling modulators
-           abTCR_and_CD3_chains == "Yes" | tcr_signaling_pathway == "Yes" | tcr_signaling_plus == "Yes" | tcr_signaling_minus == "Yes" |  meta_tcr_signaling != "Other"    ~ "ROUND_RECTANGLE", # TCR components & TCR signaling modulators
-           t_co_stim  == "Yes" | t_act_plus == "Yes"  | t_act_minus == "Yes"    ~ "RECTANGLE", 
-           peptidase        == "Yes"                                            ~ "TRIANGLE", 
-           transporter      == "Yes" | abc_transporter  == "Yes" | transporter_activity == "Yes"  | ion_channel   == "Yes"  ~ "VEE",
-           adapter          == "Yes" | adapter_in_signaling == "Yes"            ~ "OCTAGON",                     
-           TRUE ~ "ELLIPSE"
-           ),
+             kinase == "Yes" | phosphatase == "Yes"                               ~ "DIAMOND",  # signaling modulators
+             ubiquitin_ligase == "Yes" | ubiquitin_ligase_complex   == "Yes"      ~ "PARALLELOGRAM",
+             GTPase == "Yes" |  GAP == "Yes" | GEF == "Yes"                       ~ "HEXAGON",  # signaling modulators
+             abTCR_and_CD3_chains == "Yes" | tcr_signaling_pathway == "Yes" | tcr_signaling_plus == "Yes" | tcr_signaling_minus == "Yes" |  meta_tcr_signaling != "Other"    ~ "ROUND_RECTANGLE", # TCR components & TCR signaling modulators
+             t_co_stim  == "Yes" | t_act_plus == "Yes"  | t_act_minus == "Yes"    ~ "RECTANGLE", 
+             peptidase        == "Yes"                                            ~ "OCTAGON", 
+             transporter      == "Yes" | abc_transporter  == "Yes" | transporter_activity == "Yes"  | ion_channel   == "Yes"  ~ "VEE",
+             adapter          == "Yes" | adapter_in_signaling == "Yes"            ~ "TRIANGLE",                     
+             TRUE ~ "ELLIPSE"
+             ),
     cytoscape_fill = case_when(
-             abTCR_and_CD3_chains  == "Yes"         ~ "#3d73a9", # top priority to highlight these (uniformly)
+             abTCR_and_CD3_chains  == "Yes"         ~ "#1a9850", # top priority to highlight these (uniformly)
              # ADP_ribosyl_cyclase    recep_of_compl_actRCQ  CD99_family SLAM_famliy  ITA_family
              ADP_ribosyl_cyclase    == "Yes"                                                     ~ "#b3b3e6",
              recep_of_compl_actRCQ  == "Yes"                                                     ~ "#cc99ff",
              CD99_family            == "Yes"                                                     ~ "#ffccff",
-             # SLAM_famliy      == "Yes"                                                           ~ "#b3b3b3",
-             ICAM_family      == "Yes"                                                           ~ "#ff99ce",
-             # ITA_family       == "Yes"                                                         ~ "#b3d9ff",
-             # tetraspanin      == "Yes"                                                         ~ "#c7bee7",
+             # SLAM_famliy          == "Yes"                                                     ~ "#b3b3b3",
+             ICAM_family            == "Yes"                                                     ~ "#ff99ce",
+             # ITA_family           == "Yes"                                                     ~ "#b3d9ff",
+             # tetraspanin          == "Yes"                                                     ~ "#c7bee7",
              
              # meta_tcr_signaling  == "Dual Role" | GTPase == "Yes" | ITSM == "Yes" | meta_Tact == "Dual Role"  ~ "#ffe5b4",    # 
              # #
@@ -1582,39 +1603,58 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
              # tcr_signaling_minus == "Yes"| t_act_minus == "Yes" | 
              # phosphatase == "Yes" | GEF == "Yes" |  ITIM == "Yes" |
              # ubiquitin_ligase  == "Yes" | ubiquitin_ligase_complex   == "Yes"                           ~ "#ff6961",  
-             meta_tcr_signaling  == "Dual Role" | meta_Tact == "Dual Role" | ITSM == "Yes"    ~ "#ffe5b4",    # 
+             
+             # meta_tcr_signaling  == "Dual Role"          ~ "#fed976",
+             meta_Tact == "Dual Role"                    ~ "#fed976",    # ffe5b4  # | ITSM == "Yes"
              #
-             tcr_signaling_plus  == "Yes" | t_co_stim  == "Yes" | t_act_plus == "Yes" | tcr_signaling_pathway == "Yes" | ITAM == "Yes"  ~ "#91cf60",    #  
+             tcr_signaling_plus  == "Yes"                                                         ~ "#1a9850",    #  3d73a9   # | tcr_signaling_pathway == "Yes"  
+             tcr_signaling_minus == "Yes"                                                         ~ "#d73027",
+             
+             t_co_stim  == "Yes" | t_act_plus == "Yes" | ISP_reg_plus == "Yes"                    ~ "#91cf60", # | ITAM == "Yes" 
+             t_act_minus == "Yes" | ISP_reg_minus == "Yes"                                        ~ "#fc8d59", # | ITIM == "Yes"  
+             
              #
-             tcr_signaling_minus == "Yes"| t_act_minus == "Yes" |  ITIM == "Yes"              ~ "#ff6961",  
-             #
-             GTPase == "Yes" | GEF == "Yes"  | GAP == "Yes"  | 
-             phosphatase == "Yes" | kinase == "Yes" |
-             ubiquitin_ligase  == "Yes" | ubiquitin_ligase_complex   == "Yes" ~ "#95d0c9",                               
-
+             ITAM == "Yes"               | ITSM == "Yes"   | ITIM == "Yes"                        ~ "#6699ff", # "#e6e600" , #d2a993
+             GTPase             == "Yes" | GEF == "Yes"    | GAP == "Yes"    | 
+             phosphatase        == "Yes" | kinase == "Yes" |
+             ubiquitin_ligase   == "Yes" | ubiquitin_ligase_complex == "Yes" |
+             cytokine_receptor  == "Yes" | signaling_receptor    == "Yes"    | surfaceome_receptor_sign == "Yes"  ~ "#99ccff", # "#e6e600" , #d2a993 
              
+             cytoscape_shape == "VEE"      ~ "#ffffff",  # d2a993
+             cytoscape_shape == "TRIANGLE" ~ "#ffffff",  # d5eff6
+             cytoscape_shape == "OCTAGON"  ~ "#ffffff",
              
-             # cytokine_receptor     == "Yes"         ~ "#99ffff",
-             signaling_receptor    == "Yes"         ~ "#95d0c9", # "#e6e600" ,
-             
-             cytoscape_shape == "VEE"      ~ "#d2a993",
-             cytoscape_shape == "TRIANGLE" ~ "#d2a993",
-             cytoscape_shape == "OCTAGON"  ~ "#d2a993",
-             
-             TRUE ~ "#d9d9d9" # "#d9d9d9"
+             TRUE ~ "#ffffff" # "#d9d9d9"
              ),
 
-        cytoscape_label = case_when(cytoscape_fill == "#3d73a9"   ~ "#ffffff", TRUE ~ "#000000")
+        cytoscape_label = case_when(cytoscape_fill %in% c("#1a9850", "#d73027", "#6699ff")  ~ "#ffffff",   TRUE ~ "#000000")
         ) 
 # colors
 easy_colors <- c("#40bf40", "#ffa31a", "#ff471a", 
-                 "#000000", "#595959",  "#bfbfbf", "#b2b266", "#d2a479", "#ff6666", "#ff9999", "#ffd480", "#F6F3a9", "#ffff00", "#66ff66", "#ccff66", "#9fdfbf", "#6699ff", "#66ccff",  "#d279d2", "#cc99ff", "#c7bee7", "#ffbbe1")
+                 "#000000", "#595959",  "#bfbfbf", "#b2b266", "#d2a479", "#ff6666", "#ff9999", "#ffd480", "#F6F3a9", "#ffff00", "#66ff66", "#ccff66", "#9fdfbf", "#6699ff", "#99ccff", "#66ccff",  "#d279d2", "#cc99ff", "#c7bee7", "#ffbbe1")
 # filter non-... values
 keep_cols <- !sapply(cytoscape_info_annotation_full, function(x) all(is.na(x) | x == "" | x =="No" | x =="Other"))
 cytoscape_info_annotation_full <- cytoscape_info_annotation_full[, keep_cols] 
 #
 write.csv(cytoscape_info_annotation_full, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/cytoscape_info_annotation.csv", row.names = FALSE)
 #
+## qid merging of previous manual annotation with new dataframe
+# xxx <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/shs2.27_golden-analysis_v2/shs2.22_goden_analysis_merge_file.csv", header = TRUE)
+# xxxx <- cytoscape_info_annotation_full %>% dplyr::select(
+#   entry, entry_name, overlap, proximity_id_cout, bait, protein_families,
+#   protein_names, gene_names_primary, function_cc, gene_ontology_molecular_function, ENSPid_string,
+#   immune_disease, abTCR_complex, abTCR_and_CD3_chains, meta_tcr_signaling, meta_Tact,
+#   CPI_candidate, meta_surfaceome, meta_ISP, ITxM, signaling,
+#   cell_adhesion, kinase, phosphatase, ubiquitin_ligase_complex, ubiquitin_ligase,
+#   APMS_CD3z_FC2, APMS_CD3e_FC2, APMS_ZAP70_FC2, APMS_Lck, APMS_FC2_overlap_count,
+#   APMS_combined_NS_CD3, APMS_combined_NS, APMS_combined_meta) %>%
+#   left_join(xxx, by = "entry")
+# write.csv(xxxx, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/shs2.27_golden-analysis_v2/golden_analysis.csv", row.names = FALSE)
+
+
+
+
+
 library(RCy3)
 cytoscapePing()  # Confirms Cytoscape is reachable
 # # cytoscape  "" fix +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1640,6 +1680,15 @@ loadTableData(
 # clone the netwokr
 cloneNetwork()
 
+cytoscape_info_annotation_full %>% 
+  dplyr::filter(gene_names_primary == "PDCD1") %>% 
+  dplyr::select(bait, gene_names_primary, meta_surfaceome, CPI_candidate, tcr_signaling_pathway, meta_tcr_signaling, meta_Tact, meta_ISP, ITxM) %>%
+  pivot_longer(
+    cols = c(meta_surfaceome, CPI_candidate, tcr_signaling_pathway, meta_tcr_signaling, meta_Tact, meta_ISP, ITxM),
+    names_to = "annotation_type",
+    values_to = "annotation_value"
+  )
+
 
 # manually add nodes: 
 # panT_extended_nodes <- cytoscape_info_annotation_full %>% dplyr::filter(bait == "panT_extended") %>% pull(gene_names_primary) %>% unique()
@@ -1653,7 +1702,7 @@ c("APMS_combined_zero","APMS_combined_anytime", "immune_disease", "abTCR_complex
   "cell_adhesion", "integrin_binding", "hydrolase_activity", "oxidoreductase_activity",
   "apoptotic_process", "ITxM", "CPI_candidate", "antibodies_bought",
   "meta_surfaceome",
-  "APMS_combined_NS" ,"APMS_combined_meta", "APMS_CD3z_FC2", "APMS_CD3e_FC2", "APMS_ZAP70_FC2", "APMS_Lck", "APMS_FC2_overlap")
+  "APMS_combined_NS", "APMS_combined_NS_CD3" ,"APMS_combined_meta", "APMS_CD3z_FC2", "APMS_CD3e_FC2", "APMS_ZAP70_FC2", "APMS_Lck", "APMS_FC2_overlap")
 
 cytoscape_column_yellow <- "APMS_combined_NS"  # alternative
 table(cytoscape_info_annotation_full[[cytoscape_column_yellow]] )
@@ -1726,7 +1775,10 @@ setEdgeLineWidthMapping(
 # 
 
 
-
+# # enrichment analysis background - not working currently... - load into cytoscape. manually "stringyfy" network tools>STRING>...
+# protein_bg_v31 <- data.frame(id = c(read_protti("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_ss_meta/_data_prot_level.csv") %>% pull(entry), 
+#   v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED %>% pull(entry)) %>% unique(),   stringsAsFactors = FALSE  )
+# createNetworkFromDataFrames(nodes = protein_bg_v31, title = "LUX protein ID background", collection = "LUX protein ID background")
 
 
 
