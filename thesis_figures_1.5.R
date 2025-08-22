@@ -1222,14 +1222,15 @@ gost_LUX <- gost_LUX %>%
   ungroup() %>%
   mutate(term_name =  str_replace_all(term_name,  # remove redundant complex terms
                                       c("alpha-beta"    = "ab", # catch before downstream modifies ab T cell activaiton and similar
-                                        "ab T cell"     = "alpha-beta T cell", # correct
                                         "ITG"           = "IT",
                                         "IT"            = "ITG",
                                         "integrin alpha"= "ITGA",
                                         "integrin beta" = "ITGB",
                                         "alpha"         = "ITGA" , 
                                         "-beta"         = "-ITGB" , 
-                                        "interleukin "  = "IL")),
+                                        "interleukin "  = "IL",
+                                        "ab T cell"     = "alpha-beta T cell" # correct
+                                      )),
          term_name = str_replace(term_name, "ITGcomplex", "integrin complex")) %>%
   distinct(term_name, comparison, recall, .keep_all = TRUE)       # remove redundant complex terms 
 
@@ -1243,8 +1244,9 @@ group_filters <- list(
 # Define common plot parameters
 common_params <- list( 
   data  = gost_LUX, #%>% dplyr::filter(grepl("CORUM", evidence_codes)),  
-  min_recall = 0.6,    max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
-  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    title_var = "g:GOSt - Recall 1" )
+  min_recall = 0.7,    max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    
+  title_var = "g:GOSt Recall > 70%" )
 # Loop through group filters and create plots
 go_LUX_result_recall <- lapply(group_filters, function(filter) {
   # Call the plotting function, which now returns a list: list(plot, dataframe)
@@ -1264,8 +1266,8 @@ go_LUX_recall_table <- go_LUX_result_recall[[2]][[2]] # <<<<<<< result table for
 ggsave(
   filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_go_recall.png",
   plot   = go_LUX_result_recall[[1]][[1]],
-  width  = 32,  # document is 16 cm wide             (before 12cm used)
-  height = 24,  # 4/3 width/high ratio is common      (before 8 cm used)
+  width  = 40,  # document is 16 cm wide             (before 12cm used)
+  height = 26,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
   dpi    = 300    # default for good quality
 )  
@@ -1355,21 +1357,25 @@ for (i in 1:length(group_filters[[1]])) {
   protein_fam_meta_entrichment_table <- rbind(protein_fam_meta_entrichment_table, enriched_protein_families[[2]])# term table
   protein_fam_meta_proteins          <- rbind(protein_fam_meta_proteins         , enriched_protein_families[[3]]) # term proteins
 }
-plot_pf <- plot_dual_distance_bubble(data = protein_fam_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
+protein_fam_meta_entrichment_table <- protein_fam_meta_entrichment_table %>% arrange(desc(recall))
+write.csv(protein_fam_meta_entrichment_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_table.csv"   , row.names = FALSE)
+write.csv(protein_fam_meta_proteins         , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_proteins.csv", row.names = FALSE)
+#    protein_fam_meta_proteins  # <<<<<<<<<<<
+#    protein_fam_meta_proteins %>% dplyr::filter(term == "ITAM") %>% pull(entry_name) %>% unique()
+#
+result_pf_enrich <- plot_dual_distance_bubble(data = protein_fam_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
                           group_filter = group_filters[[1]],
                           grouping = "plot_heading",   term_column = "term",    distance_column = "recall",    
                           distance_method = "euclidean", # distance parameters
                           x_var = "plot_heading"  ,    y_var = "term",    size_var = "recall",    
                           fill_var = "p_value"    ,    title_var = "Protein familiy enrichment" # plot parameters
 )
-protein_fam_meta_entrichment_table <- protein_fam_meta_entrichment_table %>% arrange(desc(recall))
-#    protein_fam_meta_proteins  # <<<<<<<<<<<
-plot_pf
+result_pf_enrich[[1]]
 ggsave(
   filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_pf.png",
-  plot   = plot_pf,
+  plot   = result_pf_enrich[[1]],
   width  = 32,  # document is 16 cm wide             (before 12cm used)
-  height = 12,  # 4/3 width/high ratio is common      (before 8 cm used)
+  height = 10,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
   dpi    = 300    # default for good quality
 )  # end of protein familiy enrichment analysis __________________________________________________________________________________________________________________
@@ -1390,21 +1396,23 @@ for (i in 1:length(group_filters[[1]])) {
   protein_domain_meta_entrichment_table <- rbind(protein_domain_meta_entrichment_table, enriched_protein_domains[[2]]) # term table
   protein_domain_meta_proteins          <- rbind(protein_domain_meta_proteins         , enriched_protein_domains[[3]]) # term proteins
 }
-plot_pd <- plot_dual_distance_bubble(data = protein_domain_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
+write.csv(protein_domain_meta_entrichment_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_table.csv"   , row.names = FALSE)
+write.csv(protein_domain_meta_proteins         , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_proteins.csv", row.names = FALSE)
+protein_domain_meta_entrichment_table <- protein_domain_meta_entrichment_table %>% arrange(desc(recall))
+#    protein_domain_meta_proteins  # <<<<<<<<<<<
+#    protein_domain_meta_proteins %>% dplyr::filter(term == "ITAM") %>% pull(entry_name) %>% unique()
+#
+result_df_enrich <- plot_dual_distance_bubble(data = protein_domain_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
                           group_filter = group_filters[[1]],
                           grouping = "plot_heading",   term_column = "term",    distance_column = "recall",    
                           distance_method = "euclidean", # distance parameters
                           x_var = "plot_heading"  ,    y_var = "term",    size_var = "recall",    
                           fill_var = "p_value"    ,    title_var = "Protein domain enrichment" # plot parameters
 )
-plot_pd
-protein_domain_meta_entrichment_table <- protein_domain_meta_entrichment_table %>% arrange(desc(recall))
-#    protein_domain_meta_proteins  # <<<<<<<<<<<
-protein_domain_meta_proteins %>% dplyr::filter(term == "ITAM") %>% pull(entry_name) %>% unique()
-
+result_df_enrich[[1]]
 ggsave(
   filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_pd.png",
-  plot   = plot_pd,
+  plot   = result_df_enrich[[1]],
   width  = 32,  # document is 16 cm wide             (before 12cm used)
   height = 12,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
