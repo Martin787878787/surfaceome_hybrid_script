@@ -299,16 +299,19 @@ if (data_type == "DDA") {
 
 ## Retrieve and append Uniprot (sequence, protein_name = description of protein)
 uniprot_ids <- unique(data_raw$entry) # protein in dataset
-uniprot <-  # retrieve desiered info for identified proteins
+id_batches <- split(uniprot_ids, ceiling(seq_along(uniprot_ids)/100))
+uniprot <- map_df(id_batches, function(batch) {
   fetch_uniprot(
-    uniprot_ids = uniprot_ids, 
-    columns = c(  # see nomenclature:   https://www.uniprot.org/help/return_fields
-      "protein_name",  "id", "gene_names", "gene_primary", "length", "sequence",
+    uniprot_ids = batch,  # <-- Use batch here, not uniprot_ids!
+    columns = c(
+      "protein_name", "id", "gene_names", "gene_primary", "length", "sequence",
       "go_c", "go_f", "xref_string", "xref_pdb",
       "cc_interaction", "cc_disease", "cc_pharmaceutical", "cc_subcellular_location",
-      "cc_ptm", "ft_lipid", "ft_carbohyd","ft_transmem", "ft_binding")) %>%
-  dplyr::rename(entry = accession,
-                entry_name = id) %>%
+      "cc_ptm", "ft_lipid", "ft_carbohyd", "ft_transmem", "ft_binding"
+    )
+  )
+}) %>%
+  dplyr::rename(entry = accession, entry_name = id) %>%
   dplyr::select(-input_id)
 
 message("If below block errors with modified sequence / stripped sequence step check whether data_type paramter correctly set(DDA or DIA)")

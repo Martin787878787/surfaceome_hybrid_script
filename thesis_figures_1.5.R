@@ -914,6 +914,12 @@ ggsave(
 ##################################################################################################################################################################################################################
 ##################################################################################################################################################################################################################
 # LUX =========================================================================================================================================================================================================================
+v31_LUX_data_prot   <- rbind( read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_4pTss/_data_prot_level.csv"),
+                              read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_ss_meta/_data_prot_level.csv"),
+                              read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_full_meta/_data_prot_level.csv")) %>%  
+  as.data.frame() %>%
+  dplyr::select(-X) # determine comparison overlap
+
 v31_LUX_data_prot_diff_abundance   <- rbind( read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_4pTss/_data_prot_diff_abundance.csv"),
                          read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_ss_meta/_data_prot_diff_abundance.csv"),
                          read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_full_meta/_data_prot_diff_abundance.csv")) %>%  
@@ -1203,18 +1209,23 @@ library(biomaRt)         # GO gost
 # perform GO enrichment for all 
 gost_LUX <- NULL
 for (i in unique(v31_LUX_data_prot_diff_abundance_sigup_upsp$plot_heading)) {
-  go_result <- go_gost(query_list    = unique(v31_LUX_data_prot_diff_abundance_sigup_upsp %>% filter(plot_heading == i) %>% pull(entry)), set = i,
+  go_result <- go_gost(query_list    = unique(v31_LUX_data_prot_diff_abundance_sigup_upsp %>% filter(plot_heading == i) %>% pull(entry)),
+                       set = i,
                        max_term_size = 100,
                        # # NULL = all GO branches;       a vector of data sources to use. Currently, these include GO (GO:BP, GO:MF, GO:CC to select a particular GO branch), KEGG, REAC, TF, MIRNA, CORUM, HP, HPA, WP. Please see the g:GOSt web tool for the comprehensive list and details on incorporated data sources.
                        go_source     = c("GO:BP", "GO:MF", "GO:CC", # basic
                                          "CORUM",                   # complexes
-                                         "KEGG",                    # signaling 
-                                         "HPA",                   # phenotype (human phenotype atlas) 
-                                         "REAC", "TF", "MIRNA", "HP", "HPA", "WP"
-                       ))                    
+                                         "KEGG","REAC", "WP",       # signaling 
+                                         "HPA", "HP", "HPA" #,      # phenotype (human phenotype atlas) 
+                                         # "TF", "MIRNA"            # regulatory DNA motifs
+                                         )   
+                       )                    
   gost_LUX <- rbind(gost_LUX,go_result)
 }
-
+# issue with some complexes from CORUM that AB+C complexes are cosidered to have 2 components - which is wrong
+# >> manually correct (cant think of universal fix right now)
+gost_LUX <- gost_LUX %>%
+  mutate(ID_count    = str_count(intersection_gene,",")+1)
 # combine GO sets to one long df
 gost_LUX <- gost_LUX %>%
   group_by(term_name) %>%
@@ -1232,7 +1243,18 @@ gost_LUX <- gost_LUX %>%
                                         "ab T cell"     = "alpha-beta T cell" # correct
                                       )),
          term_name = str_replace(term_name, "ITGcomplex", "integrin complex")) %>%
-  distinct(term_name, comparison, recall, .keep_all = TRUE)       # remove redundant complex terms 
+  distinct(term_name, comparison, recall, .keep_all = TRUE)  %>% # remove redundant complex terms 
+  mutate(term_size   = case_when(term_name == "ITGA5-ITGB1-SPP1 complex"   ~ 3,
+                                 term_name == "ITGAV-ITGB1-SPP1 complex"   ~ 3,
+                                 term_name == "ITGA4-ITGB1-CD81 complex"   ~ 3,
+                                 term_name == "ITGA1-ITGB1-COL6A3 complex" ~ 3,
+                                 term_name == "ITGA1-ITGB1-PTPN2 complex"  ~ 3,
+                                 term_name == "ITGA4-ITGB1 complex"  ~ 2,
+                                 TRUE ~term_size),
+         recall       = ID_count/term_size) %>%         
+  dplyr::filter(!term_name %in% c("ITGAv-ITGB1 complex",    # duplicated name
+                                  "ITGA5-ITGB4 complex",    # wrong annotated in corum - acutally ITGA5-ITGB1 (contain in other term category - so removed corum term)
+                                  "ITGA3-ITGB1 complex")  ) # redundant through ITGA3-ITGB1-BSG complex 
 
 ## plot GO result =====================================================================================================================================================
 # Define order and elements to that are to be plotted together 
@@ -1246,7 +1268,7 @@ common_params <- list(
   data  = gost_LUX, #%>% dplyr::filter(grepl("CORUM", evidence_codes)),  
   min_recall = 0.7,    max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
   x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    
-  title_var = "g:GOSt Recall > 70%" )
+  title_var = "g:GOSt Recall > 0.7" )
 # Loop through group filters and create plots
 go_LUX_result_recall <- lapply(group_filters, function(filter) {
   # Call the plotting function, which now returns a list: list(plot, dataframe)
@@ -1261,13 +1283,23 @@ go_LUX_result_recall <- lapply(group_filters, function(filter) {
   return(result_list) # store both plot and dataframe
 })
 go_LUX_result_recall[[1]][[1]] # plot for group_filters[1]
-go_LUX_recall_table <- go_LUX_result_recall[[2]][[2]] # <<<<<<< result table for group_filters[1]
+go_LUX_recall_table        <- go_LUX_result_recall[[1]][[2]] # <<<<<<< result table for group_filters[1] list element 2
+go_LUX_term_proteins_maxID <- go_LUX_result_recall[[1]][[2]] %>%
+  dplyr::select(term_name, term_size, recall, evidence_codes, intersection_gene) %>% 
+  group_by(term_name) %>%
+  slice_max(recall, n = 1) %>% # keep top 1 independent (line above) of term 
+  ungroup() %>%
+  distinct() %>%
+  arrange(desc(row_number()))  # inverts order of df so easy to compare output table with plot
+
+write.csv(go_LUX_term_proteins_maxID, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_go_protein_maxID.csv"   , row.names = FALSE)
+
 # export plot of interest 
 ggsave(
   filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_go_recall.png",
   plot   = go_LUX_result_recall[[1]][[1]],
-  width  = 40,  # document is 16 cm wide             (before 12cm used)
-  height = 26,  # 4/3 width/high ratio is common      (before 8 cm used)
+  width  = 38,  # document is 16 cm wide             (before 12cm used)
+  height = 21,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
   dpi    = 300    # default for good quality
 )  
@@ -1340,8 +1372,39 @@ ggsave(
 # )  # end of gost baset enrichemtn analysis __________________________________________________________________________________________________________________
 
 
-
 ## protein family enrichment =====================================================================================================================================================
+# qid list result #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#- #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
+protein_entry_vector <- read.csv("/Users/mgesell/Downloads/targets.csv", header = TRUE) %>% dplyr::filter(entry != "" & CPI.Target == "Yes"
+                                                                                                          ) %>% pull(entry)
+enriched_go <- go_gost(query_list    = protein_entry_vector,
+                       set = "Protein Families: LUX_targets",   max_term_size = 100,
+                       # # NULL = all GO branches;       a vector of data sources to use. Currently, these include GO (GO:BP, GO:MF, GO:CC to select a particular GO branch), KEGG, REAC, TF, MIRNA, CORUM, HP, HPA, WP. Please see the g:GOSt web tool for the comprehensive list and details on incorporated data sources.
+                       go_source     = c("GO:BP", "GO:MF", "GO:CC", # basic
+                                         "CORUM",                   # complexes
+                                         "KEGG","REAC", "WP",       # signaling 
+                                         "HPA", "HP", "HPA" #,      # phenotype (human phenotype atlas) 
+                                         # "TF", "MIRNA"            # regulatory DNA motifs
+                       )) 
+plot_dual_distance_bubble(data = enriched_go ,  min_recall = 0.7,    max_p_value = 0.05,   
+  group_filter = unique(enriched_go$comparison),
+  grouping = "comparison",   term_column = "term_name",    distance_column = "recall",    
+  distance_method = "euclidean", # distance parameters
+  x_var = "comparison"  ,    y_var = "term_name",    size_var = "recall",    
+  fill_var = "p_value"    ,    title_var = "g:GOSt" # plot parameters
+)
+
+
+(enriched_go)  c(common_params, list(group_filter = filter))
+enriched_protein_families <- pF_pD_enrichment_analysis(data_subset_name     = "Protein Families: LUX_targets",
+                                                       protein_entry_vector = protein_entry_vector,
+                                                       mode = "protein_family")
+enriched_protein_domains <- pF_pD_enrichment_analysis(data_subset_name      = "Protein Domains: LUX_targets",
+                                                       protein_entry_vector = protein_entry_vector,
+                                                       mode = "domain_ft")
+enriched_protein_families[[2]]
+enriched_protein_domains[[1]]
+ #___________________________________________________________________________________________________________________________
+
 group_filters <- list(c("panT", "CD4+" , "CD8+" , "Naive",  "Memory", "Naive CD4+", "Memory CD4+", "Naive CD8+" , "Memory CD8+" ))
 protein_fam_meta_entrichment_table  <- NULL # empty df
 protein_fam_meta_proteins           <- NULL # empty df
@@ -1357,9 +1420,26 @@ for (i in 1:length(group_filters[[1]])) {
   protein_fam_meta_entrichment_table <- rbind(protein_fam_meta_entrichment_table, enriched_protein_families[[2]])# term table
   protein_fam_meta_proteins          <- rbind(protein_fam_meta_proteins         , enriched_protein_families[[3]]) # term proteins
 }
+# isolate per term all proteins that were detected
+pf_overall_proteins_per_term <- protein_fam_meta_proteins %>%
+  group_by(term) %>%
+  summarise(overall_proteins_per_term = n_distinct(entry)) %>%
+  ungroup()
+pf_proteins_per_term <- protein_fam_meta_proteins %>%
+  dplyr::select(entry, term) %>%
+  distinct() %>%
+  left_join(dplyr::select(proteome_upsp_202501, entry, gene_names_primary), by = "entry") %>%
+  dplyr::select(term, gene_names_primary) %>%
+  group_by(term) %>%
+  summarise(gene_name = paste(unique(gene_names_primary), collapse = ", "))
+# merge
+pf_meta_genes_maxID <- pf_overall_proteins_per_term %>%
+  left_join(pf_proteins_per_term, by = "term") 
+
 protein_fam_meta_entrichment_table <- protein_fam_meta_entrichment_table %>% arrange(desc(recall))
 write.csv(protein_fam_meta_entrichment_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_table.csv"   , row.names = FALSE)
 write.csv(protein_fam_meta_proteins         , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_proteins.csv", row.names = FALSE)
+write.csv(pf_meta_genes_maxID               , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_genes.csv", row.names = FALSE)
 #    protein_fam_meta_proteins  # <<<<<<<<<<<
 #    protein_fam_meta_proteins %>% dplyr::filter(term == "ITAM") %>% pull(entry_name) %>% unique()
 #
@@ -1396,23 +1476,50 @@ for (i in 1:length(group_filters[[1]])) {
   protein_domain_meta_entrichment_table <- rbind(protein_domain_meta_entrichment_table, enriched_protein_domains[[2]]) # term table
   protein_domain_meta_proteins          <- rbind(protein_domain_meta_proteins         , enriched_protein_domains[[3]]) # term proteins
 }
+# isolate per term all proteins that were detected
+domain_overall_proteins_per_term <- protein_domain_meta_proteins %>%
+  group_by(term) %>%
+  summarise(overall_proteins_per_term = n_distinct(entry)) %>%
+  ungroup()
+domain_count_per_condition <- protein_domain_meta_proteins %>%
+  group_by(plot_heading, term) %>%
+  summarise(domain_count_per_condition = n()) %>%
+  group_by(term) %>% 
+  slice_max(domain_count_per_condition, n = 1) %>% # keep top 1 independent (line above) of term 
+  ungroup() %>%
+  dplyr::select(-plot_heading) %>%
+  distinct()
+domain_proteins_per_term <- protein_domain_meta_proteins %>%
+  dplyr::select(entry, term) %>%
+  distinct() %>%
+  left_join(dplyr::select(proteome_upsp_202501, entry, gene_names_primary), by = "entry") %>%
+  dplyr::select(term, gene_names_primary) %>%
+  group_by(term) %>%
+  summarise(gene_name = paste(unique(gene_names_primary), collapse = ", "))
+# merge
+protein_domain_meta_genes_maxID <- domain_overall_proteins_per_term %>%
+  left_join(domain_count_per_condition, by = "term") %>%
+  left_join(domain_proteins_per_term  , by = "term") 
+##  
 write.csv(protein_domain_meta_entrichment_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_table.csv"   , row.names = FALSE)
 write.csv(protein_domain_meta_proteins         , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_proteins.csv", row.names = FALSE)
+write.csv(protein_domain_meta_genes_maxID      , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_genes.csv", row.names = FALSE)
+
 protein_domain_meta_entrichment_table <- protein_domain_meta_entrichment_table %>% arrange(desc(recall))
-#    protein_domain_meta_proteins  # <<<<<<<<<<<
-#    protein_domain_meta_proteins %>% dplyr::filter(term == "ITAM") %>% pull(entry_name) %>% unique()
+# protein_domain_meta_proteins  # <<<<<<<<<<<
+protein_domain_meta_proteins %>% dplyr::filter(term == "Ig-like V-type") %>% pull(entry_name) %>% unique()
 #
-result_df_enrich <- plot_dual_distance_bubble(data = protein_domain_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
+result_pd_enrich <- plot_dual_distance_bubble(data = protein_domain_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
                           group_filter = group_filters[[1]],
                           grouping = "plot_heading",   term_column = "term",    distance_column = "recall",    
                           distance_method = "euclidean", # distance parameters
                           x_var = "plot_heading"  ,    y_var = "term",    size_var = "recall",    
                           fill_var = "p_value"    ,    title_var = "Protein domain enrichment" # plot parameters
 )
-result_df_enrich[[1]]
+result_pd_enrich[[1]]
 ggsave(
   filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_pd.png",
-  plot   = result_df_enrich[[1]],
+  plot   = result_pd_enrich[[1]],
   width  = 32,  # document is 16 cm wide             (before 12cm used)
   height = 12,  # 4/3 width/high ratio is common      (before 8 cm used)
   units  = "cm",
@@ -1444,34 +1551,24 @@ ggsave(
 # that means eventhough e.g. not sig-up in naiveCD4+ subsets any ID from panT meta subsets transfered to that subsets (ID expansion following confidence gradient)
 # based on enhanced statistical power panT t-test (12 replicated and at least 9/12 replicate IDs required for imputation) is more credible than 3vs3 replicate tests from individual subsets
 # --> use panT sig-enriched proteins as core abTCR community --> expand (copy) IDs into all subsets. same for other meta IDs. distributed to downstream of 
-# --> GO, complex, protien family and domain enrichment based on resulting dataframe
 # *************************************************************************************************************************************************
 # *************************************************************************************************************************************************
 
-# extend dataset subsets - unique(CD8 is panT + CD8)
-df_list <- list(
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "CD4+", "Naive CD4+" ))   %>%    mutate(plot_heading = "Naive CD4+"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "CD8+", "Naive CD8+" ))   %>%    mutate(plot_heading = "Naive CD8+"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "CD4+", "Memory CD4+"))   %>%    mutate(plot_heading = "Memory CD4+"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "CD8+", "Memory CD8+"))   %>%    mutate(plot_heading = "Memory CD8+"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "Naive CD4+" , "Naive CD8+" ))   %>%    mutate(plot_heading = "Naive"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "Memory CD4+", "Memory CD8+"))   %>%    mutate(plot_heading = "Memory"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "CD4+"  , "Naive CD4+" , "Memory CD4+"))   %>%    mutate(plot_heading = "CD4+"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "CD8+"  , "Naive CD8+" , "Memory CD8+"))   %>%    mutate(plot_heading = "CD8+"),
-  v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT"                                 ))   %>%    mutate(plot_heading = "panT")
-)
-v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED <- bind_rows(df_list) %>%  distinct() %>%
-  left_join(proteome_20250804 %>% dplyr::select(entry, entry_name, involvement_in_disease, domain_cc, domain_ft, topological_domain, protein_families),  by = "entry") 
-
-
-
-
-
-
-
-
-
-
+# # extend dataset subsets - unique(CD8 is panT + CD8)
+# df_list <- list(
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "CD4+", "Naive CD4+" ))   %>%    mutate(plot_heading_ssEXT = "Naive CD4+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "CD8+", "Naive CD8+" ))   %>%    mutate(plot_heading_ssEXT = "Naive CD8+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "CD4+", "Memory CD4+"))   %>%    mutate(plot_heading_ssEXT = "Memory CD4+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "CD8+", "Memory CD8+"))   %>%    mutate(plot_heading_ssEXT = "Memory CD8+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "Naive CD4+" , "Naive CD8+" ))   %>%    mutate(plot_heading_ssEXT = "Naive"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "Memory CD4+", "Memory CD8+"))   %>%    mutate(plot_heading_ssEXT = "Memory"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "CD4+"  , "Naive CD4+" , "Memory CD4+"))   %>%    mutate(plot_heading_ssEXT = "CD4+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "CD8+"  , "Naive CD8+" , "Memory CD8+"))   %>%    mutate(plot_heading_ssEXT = "CD8+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT"                                 ))   %>%    mutate(plot_heading_ssEXT = "panT")
+# )
+# v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED <- bind_rows(df_list) %>%  distinct() %>%
+#   left_join(proteome_20250804 %>% dplyr::select(entry, entry_name, involvement_in_disease, domain_cc, domain_ft, topological_domain, protein_families),  by = "entry") 
+# 
 
 
 ###############################################################################################################################################
@@ -1823,8 +1920,8 @@ write.csv(cytoscape_info_annotation_full, "/Users/mgesell/Desktop/currentR/2025-
 #   left_join(xxx, by = "entry")
 # write.csv(xxxx, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/shs2.27_golden-analysis_v2/golden_analysis.csv", row.names = FALSE)
 
-
-
+paste(c("CD3 and TCR chains in datast: ", cytoscape_info_annotation_full %>% dplyr::filter(abTCR_and_CD3_chains  == "Yes") %>% pull(entry_name) %>% unique()))
+length(cytoscape_info_annotation_full %>% dplyr::filter(abTCR_and_CD3_chains  == "Yes") %>% pull(entry_name) %>% unique())
 
 
 library(RCy3)
