@@ -14,52 +14,55 @@ set.seed(123)
 #######################################################################################################################################################################################
 #######################################################################################################################################################################################
 script_version   = "NeA1.4" # Network Analysis human 1.0
-ppi_network      = "meta_pS700_CP_pBG"  # "string", "complexPortal", "biogrid_physical", "meta_pS700_CP_pBG" (=physical string 700 cutoff, complex portal, physical biogrid)
+ppi_network      = "complexPortal"  # "string", "complexPortal", "biogrid_physical", "meta_pS700_CP_pBG" (=physical string 700 cutoff, complex portal, physical biogrid)
 cluster_method   = "walktrap"          # "walktrap", "markov", "betweenness"
 # write results to ...
-output_dir       = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements"
-experiment_name  = "v31_NeA"
+output_dir       = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/Nea_1.4"
+experiment_name  = ""
 test_parameter   = "" # e.g. physical / __CD4network / __CD8network
 today_str        = format(Sys.Date(), "%Y-%m-%d")
-base_directory   =  paste0(output_dir, "/", experiment_name, "/", today_str, "_", ppi_network, "_", test_parameter)
-dir.create(paste0(base_directory), showWarnings = FALSE)
+base_directory   = paste0(output_dir, "/", experiment_name, "/", today_str, "_", ppi_network, "_", test_parameter)
+dir.create(paste0(base_directory), showWarnings = TRUE)
 ## PageRank
 pageRank_dampening_values = c(0.85)  # default 0.85
-pageRank_cutoff_values    = c(1)     # 0.9, 0.95, 0.975, 0.99, 1)  # the higher to more stringent the protein (shell of grey proteins). e.g. set to 1 and setpageRank_retain_all_changes = TRUE to see plots for only input list (no interactors)
+pageRank_cutoff_values    = c(0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1)     # 0.9, 0.95, 0.975, 0.99, 1)  # the higher to more stringent the protein (shell of grey proteins). e.g. set to 1 and setpageRank_retain_all_changes = TRUE to see plots for only input list (no interactors)
 pageRank_retain_all_changes = TRUE   # chose based on your goal: TRUE~"keep all input nodes"; FALSE~"keep only nodes with highest connectivity 
 ## defines max cluster size (all larger than this excluded for downstream analysis)
 param = 50 # start high (e.g. 500) than check "number_of_proteins_per_cluster.pdf" for orientation & titrate down (e.g. 100, 30) until "clustered_network_significant_with_changes_labeled.pdf" looks nice.  
 
 ###### "changes" input data ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # option 1 direct input (default)
-changes   <- read.delim("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/LUX_metachanges_shs2.22.csv", header = FALSE, stringsAsFactors = FALSE, sep = ',') %>% pull(1)
+data <- read.delim("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_full_meta/_data_prot_diff_abundance.csv", header = TRUE, sep = ',') 
+changes <- data %>% 
+  filter(log2FC > 1 & adj_pvalue <= 0.05) %>%
+  pull(entry)
 
 # option 2 & 3    2: prior knowlege extraction for T cell linages.    3: prior knowledge + condition (T cell subset) specific information retrieval
   # result for 2: .../intermediate/network_interactions_meta_pS700_CP_pBG.tsv
   # result for 3: .../intermediate/network_interactions_meta_pS700_CP_pBG_changes_sub-network.tsv
 # keep both below empty unless specific subset network / subset prior knowledge network extraction desired
-subset     = "" # make sure to match subset if desired
+subset     = ""  # make sure to match subset if desired
 LUX_subset = ""  # "nCD4_TCR_vs_nCD4_Iso"   "nnCD4_TCR_vs_nnCD4_Iso"   "nCD8_TCR_vs_nCD8_Iso"    "nnCD8_TCR_vs_nnCD8_Iso"
 
-## extract indirect pior knowledge TCR ppi network ..........................................................................................................................................................
-if (subset == "CD4") {
-  changes   <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/2025-05_CD4_CD8_network_proxis.csv", header = TRUE) %>%
-    filter(!is.na(entry_CD4)) %>% select(entry_CD4) %>% pull(1)
-} else if (subset == "CD8") {
-  changes   <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/2025-05_CD4_CD8_network_proxis.csv", header = TRUE) %>%
-    filter(!is.na(entry_CD8)) %>% select(entry_CD8) %>% pull(1)
-}
-
-if (LUX_subset != "") {
-  # ## extract LUX sig-up abTCR subset network
-  data_prot_diff_v31_LUX_sigup <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_uniqueImpute_shs2.22/_data_prot_diff_abundance.csv", header = TRUE) %>%
-    filter(log2FC >= 1 & adj_pvalue <= 0.05 &   # extract sig up and ... 
-             comparison == LUX_subset) %>%      # condition specific data  
-    select(entry) %>% pull(1) %>% unique()
-  # merge subset specific and LUX subset specific IDs (to later on see interactions between LUX and prior knowledge sets)
-  changes <- unique(c(changes, data_prot_diff_v31_LUX_sigup))
-}# ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-# ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+# ## extract indirect pior knowledge TCR ppi network ..........................................................................................................................................................
+# if (subset == "CD4") {
+#   changes   <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/2025-05_CD4_CD8_network_proxis.csv", header = TRUE) %>%
+#     filter(!is.na(entry_CD4)) %>% select(entry_CD4) %>% pull(1)
+# } else if (subset == "CD8") {
+#   changes   <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_NeA/2025-05_CD4_CD8_network_proxis.csv", header = TRUE) %>%
+#     filter(!is.na(entry_CD8)) %>% select(entry_CD8) %>% pull(1)
+# }
+# 
+# if (LUX_subset != "") {
+#   # ## extract LUX sig-up abTCR subset network
+#   data_prot_diff_v31_LUX_sigup <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_uniqueImpute_shs2.22/_data_prot_diff_abundance.csv", header = TRUE) %>%
+#     filter(log2FC >= 1 & adj_pvalue <= 0.05 &   # extract sig up and ... 
+#              comparison == LUX_subset) %>%      # condition specific data  
+#     select(entry) %>% pull(1) %>% unique()
+#   # merge subset specific and LUX subset specific IDs (to later on see interactions between LUX and prior knowledge sets)
+#   changes <- unique(c(changes, data_prot_diff_v31_LUX_sigup))
+# }# ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+# # ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
 
 #######################################################################################################################################################################################
 #######################################################################################################################################################################################
@@ -102,14 +105,14 @@ for (loop_var1 in pageRank_dampening_values) {
     } else if (ppi_network =="complexPortal"){ # ppi_network = complexPortal
       complexPortal_input_file         <- "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources/complex_portal_9606.tsv" #" /Users/mgesell/Desktop/currentR/Network_plotting_Cathy/input/complex_portal_9606.tsv"
       complexPortal_mapping_table_file <- "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources/uniprotkb_AND_reviewed_true_AND_model_o_2024_11_08.tsv" #"/Users/mgesell/Desktop/currentR/Network_plotting_Cathy/input/uniprotkb_AND_reviewed_true_AND_model_o_2024_11_08.tsv"
-      network_output_filename_biogrid   <- "network_interactions_complexPortal"   # 
+      network_output_filename          <- "network_interactions_complexPortal"   # 
       
       filter_complexPortal_network(complexPortal_input_file, complexPortal_mapping_table_file,
                                    changes,
                                    network_output_filename)
     } else if (ppi_network == "biogrid_physical") {
       biogrid_input_file              <- "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/NeA_resources/BIOGRID-ALL-4.4.242_20250218.mitab.txt" #"/Users/mgesell/PhD/local_resources/PPIs_and_complexes/BIOGRID-ALL-4.4.242_20250218.mitab.txt"
-      network_output_filename_cp  <- "network_interactions_biogrid_physical"   # 
+      network_output_filename   <- "network_interactions_biogrid_physical"   # 
      
        filter_biogrid_network(biogrid_input_file, 
                               changes, 
