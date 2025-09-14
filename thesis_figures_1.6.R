@@ -2494,7 +2494,7 @@ radar_plot_ss <- cytoscape_info_annotation_full %>%
                                         ~ 1, TRUE ~ 0),
          Phosphorylation_reg= case_when(kinase == "Yes" | phosphatase == "Yes"    
                                         ~ 1, TRUE ~ 0),
-         Ubiquitinylation_reg= case_when(ubiquitin_ligase == "Yes" | ubiquitin_ligase_complex   == "Yes"
+         Ubiquitination_reg = case_when(ubiquitin_ligase == "Yes" | ubiquitin_ligase_complex   == "Yes"
                                          ~ 1, TRUE ~ 0),
          GTPase_reg         = case_when(GTPase == "Yes" |  GAP == "Yes" | GEF == "Yes"     
                                         ~ 1, TRUE ~ 0),
@@ -2505,7 +2505,7 @@ radar_plot_ss <- cytoscape_info_annotation_full %>%
          Adapter            = case_when(adapter          == "Yes" | adapter_in_signaling == "Yes"            
                                        ~ 1, TRUE ~ 0)
   ) %>%
-  dplyr::select(entry, entry_name, bait, TCR_reg, T_cell_reg, Phosphorylation_reg, Ubiquitinylation_reg, GTPase_reg, Peptidase, Transporter, Adapter) %>%
+  dplyr::select(entry, entry_name, bait, TCR_reg, T_cell_reg, Phosphorylation_reg, Ubiquitination_reg, GTPase_reg, Peptidase, Transporter, Adapter) %>%
   distinct() %>%
   dplyr::select(-entry, -entry_name) %>%
   dplyr::filter(!is.na(bait)) # remove unassigned
@@ -2524,7 +2524,7 @@ rownames(radar_ready) <- c("Max", "Min", radar_sum$bait)
 # 4. Plot
 radar_subset <- radar_ready #[c("Max","Min","Naive","Memory","CD4+","CD8+"), ]
 
-distinct_easy_colors <- c("black", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "grey", "#cc66ff")
+# distinct_easy_colors <- c("black", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "grey", "#cc66ff")
 distinct_easy_colors <- c("#0066ff", "#ff7f00", "#33a02c", "#0000ff", "#ff0000", "#b2df8a", "#66b3ff", "#fb9a99", "grey", "#8c8c8c")
 
 # distinct_easy_colors <- c("#0072B2", "#D55E00", "#555555", "#08306B", "#F4A6A6", "#DDDDDD", "#A6CEE3", "#67000D", "grey", "#4B0055")
