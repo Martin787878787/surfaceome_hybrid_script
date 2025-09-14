@@ -1,7 +1,8 @@
 #Load libraries required ----------------------------------------------------------------------------------------------------------
 rm(list = ls())           # Purge workspace
 set.seed(123)
-script_version = "_1.1" # version stamp on output directory
+script_version = "_1.5" # version stamp on output directory
+# v1.5   enrichment based on confidence gradient IDs (naive CD4+ gets all panT t-test IDs added due to higher confidence)
 # Core data wrangling and manipulation
 library(dplyr)
 library(stringr)
@@ -904,6 +905,7 @@ ggsave(
 
 ##################################################################################################################################################################################################################
 ##################################################################################################################################################################################################################
+# chapter 3, chapter3
 #     ____ _                  _            _____ 
 #   / ___| |__   __ _ _ __  | |_ ___ _ __ |___ / 
 #  | |   | '_ \ / _` | '_ \| __/ _ \ '__|   |_ \ 
@@ -912,7 +914,512 @@ ggsave(
 #                   |_|                         
 ##################################################################################################################################################################################################################
 ##################################################################################################################################################################################################################
+# CSC =========================================================================================================================================================================================================================
+v31_CSC_prot      <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_shs2.27/_data_prot_level.csv")
+
+##### glyco protein eval
+CSC_surfaceome_Jurkat    <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v16.2_CSC_deam_7aa__Jurkat-Tact_timecourse/_output_1-2_ludo_adjp_0.7string_shs2.27/data_raw_up_surf_gly_nZ.csv", header = TRUE)
+CSC_surfaceome_Jurkat <- CSC_surfaceome_Jurkat %>% 
+  filter(csc_signature == "Yes")
+CSC_surfaceome_panT <- rbind(
+  read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v16.1_CSC_panT_act/202507_reanalysis/_output_1-2_ludo_adjp_0.7string_shs2.27/data_raw_up_surf_gly_nZ.csv", header = TRUE),
+  read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v25_CSC_panT_lowinput/_output_1-2_ludo_adjp_0.7string_shs2.27/data_raw_up_surf_gly_nZ.csv"               , header = TRUE),
+  read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v26_CSC_FACS_sorted_Tsubsets/_output_1-2_ludo_adjp_0.7string_shs2.27/data_raw_up_surf_gly_nZ.csv"        , header = TRUE),       
+  read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_shs2.27/data_raw_up_surf_gly_nZ.csv"      , header = TRUE)  )
+CSC_surfaceome_panT <- CSC_surfaceome_panT %>% 
+  filter(csc_signature == "Yes" & raw_prec_intensity > 0)
+## upset plot jurkat vs panT
+upset_CSC_JK_panT <-  bind_rows(
+  tibble(entry = CSC_surfaceome_Jurkat %>% dplyr::select(entry) %>% distinct(), set = "Jurkat" ),
+  tibble(entry = CSC_surfaceome_panT   %>% dplyr::select(entry) %>% distinct(), set = "panT")) %>% 
+  distinct() %>%
+  group_by(entry) %>% 
+  summarise(sets = list(set)) %>%
+  distinct()
+
+Fig3.3.2_JK_panT_upset <- upset_CSC_JK_panT %>% 
+  ggplot(aes(x = sets)) +
+  geom_bar(fill = "black", color = "white", linewidth = 0.3) +
+  scale_x_upset(sets = c("Jurkat", "panT", c("Jurkat", "panT  "))) +# upset_CSC_JK_panT$sets[[1]],    name = "",  n_intersections = 20  ) +
+  labs(    y     = "Intersection",    title = "Protein Overlap"  ) +
+  plot_theme() +
+  theme(axis.text.y = element_text(size = 14))
+
+Fig3.3.2_b
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_CSC_b.png",
+  plot = Fig3.3.2_b,
+  width  = 10.66,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+
+
+
+
+
+### evalute CSC sites based on uniprot annotated CSC sites (novel vs known)
+# jurkat
+CSC_surfaceome_Jurkat_site_eval <- evaluate_csc_sites(CSC_surfaceome_Jurkat)
+Ng_summary_jurkat <- CSC_surfaceome_Jurkat_site_eval[[1]] %>%
+  select(entry, site, summary) %>%
+  distinct() %>%
+  mutate(summary = gsub("NOVEL site", "novel", summary)) %>%
+  rename(CSC_site = site) %>%
+  count(summary) %>% 
+  mutate(summary = factor(summary, levels = c("known", "validated", "novel")))  %>%
+  dplyr::rename(Jurkat = n)
+# panT
+CSC_surfaceome_panT_site_eval   <- evaluate_csc_sites(CSC_surfaceome_panT)
+Ng_summary_panT <- CSC_surfaceome_panT_site_eval[[1]] %>%
+  select(entry, site, summary) %>%
+  distinct() %>%
+  mutate(summary = gsub("NOVEL site", "novel", summary)) %>%
+  rename(CSC_site = site) %>%
+  count(summary) %>% 
+  mutate(summary = factor(summary, levels = c("known", "validated", "novel"))) %>%
+  dplyr::rename(panT = n)
+# print
+Ng_summary_jurkat
+Ng_summary_panT
+# combine results
+Ng_summary_result <- Ng_summary_jurkat %>% left_join(Ng_summary_panT, by = "summary") %>%
+  pivot_longer(cols = c(Jurkat, panT), names_to = "cell_type", values_to = "count")
+# plot
+Fig3.3.2_CSC_panTvsJurkat_glycoSitePlot <- Ng_summary_result %>%
+  ggplot(aes(x = cell_type, y = count, fill = summary)) +
+  geom_col(position = "stack") +
+  scale_fill_manual(values = c("novel" = "#0000cc", "validated" = "#4e79a7", "known" = "grey")) +
+  labs(
+    title = "N-glyco sites",
+    x = c("Jurkat       panT"),
+    y = "Glyco site count",
+    fill = "Category"
+  ) +
+  plot_theme() +
+  theme(axis.text.x = element_blank())
+ggsave(
+  filename = paste0("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.2_CSC_glycoSitePlot_JKpaT.png"),
+  plot = Fig3.3.2_CSC_panTvsJurkat_glycoSitePlot,
+  width  = 12,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+
+################## results table basis:
+v31_CSC_table_base <- v31_CSC_prot %>%
+  dplyr::select(condition, entry, entry_name, condition_median_imp_log2_intensity) %>%
+  distinct() %>% 
+  pivot_wider(id_cols = c("entry", "entry_name"), names_from = "condition", values_from = "condition_median_imp_log2_intensity") %>%
+  dplyr::select(entry, entry_name, nCD4, nnCD4, nCD8, nnCD8)
+  
+act_marker_list <- c("PDCD1_HUMAN", "CD27_HUMAN", )
+# v31_CSC_Act_marker <- v31_CSC_table_base %>%
+#   dplyr::filter(entry_name %in% poi_table$Thermo_Marker_Tact)
+v31_CSC_CPI_list <- v31_CSC_table_base %>%
+  dplyr::filter(entry_name %in% poi_table$CPIs)
+  
+
+# Fig2.3.1_h overlap/upset Jurkat CSPA & pT CSC ......................................................................................................................
+# write.csv(data.frame(Values = CSPA_Jurkat), "/Users/mgesell/Downloads/CSPA_Jurkat.csv", row.names = FALSE)
+# Prepare data in required format
+panT_csc_ids <- v31_CSC_prot %>% 
+  filter(csc_signature_psm == "yes") %>% 
+  pull(entry) %>%
+  unique()
+
+upset_data_v31_CSC <- bind_rows(
+  tibble(entry = v31_CSC_prot %>% dplyr::select(entry, condition) %>% distinct() %>% dplyr::filter(condition == "nCD4")  %>% pull(entry)  , set = "Naive CD4+" ),
+  tibble(entry = v31_CSC_prot %>% dplyr::select(entry, condition) %>% distinct() %>% dplyr::filter(condition == "nnCD4") %>% pull(entry)  , set = "Memory CD4+"),
+  tibble(entry = v31_CSC_prot %>% dplyr::select(entry, condition) %>% distinct() %>% dplyr::filter(condition == "nCD8")  %>% pull(entry)  , set = "Naive CD8+" ),
+  tibble(entry = v31_CSC_prot %>% dplyr::select(entry, condition) %>% distinct() %>% dplyr::filter(condition == "nnCD8")  %>% pull(entry) , set = "Memory CD8+")) %>% 
+  group_by(entry) %>% 
+  summarise(sets = list(set)) 
+
+# %>%  # Critical: list column of set memberships
+#   ungroup() %>%
+#   filter(!(map_lgl(sets, ~ length(.) == 1 && all(. == "CSPA contained"))))
+
+Fig3.3.2_b <- upset_data_v31_CSC %>% 
+  ggplot(aes(x = sets)) +
+  geom_bar(fill = "black", color = "white", linewidth = 0.3) +
+  scale_x_upset(
+    sets = upset_data_v31_CSC$sets[[1]],
+    name = "",
+    n_intersections = 20
+  ) +
+  labs(
+    y     = "Intersection",
+    title = "Protein Overlap"
+  ) +
+  plot_theme() +
+  theme(axis.text.y = element_text(size = 14))
+
+Fig3.3.2_b
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_CSC_b.png",
+  plot = Fig3.3.2_b,
+  width  = 10.66,  # document is 16 cm wide             (before 12cm used)
+  height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+# CSC volcano and diff plots
+v31_CSC_prot_diff <- read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_CSC_FP20_deam_semi_7aa_4ss/_output_1-2_ludo_adjp_0.7string_shs2.27/_data_prot_diff_abundance.csv") %>%
+  mutate(plot_heading = case_when(ttest_condition == "nCD4" & ttest_reference == "nnCD4"  ~ "CD4+",
+                                  ttest_condition == "nCD8" & ttest_reference == "nnCD8"  ~ "CD8+",
+                                  ttest_condition == "nCD4"  & ttest_reference == "nCD8"  ~ "Naive",
+                                  ttest_condition == "nnCD4" & ttest_reference == "nnCD8" ~ "Memory")) 
+# volcano
+count_var = 1
+loop_frame <- unique(v31_CSC_prot_diff$comparison)
+# comp_counter = 1
+for (comp_counter in 1:length(loop_frame)) {   # ----------------------- LOOOOOOOP --------------------- LOOOOOOOP ------------------------------ LOOOOOOOP ------------------- LOOOOOOOP -------------------
+  usedConditions <- c(gsub("_vs_.*", "", loop_frame[comp_counter]), gsub("^.*_vs_", "", loop_frame[comp_counter]))
+  result_subset <- v31_CSC_prot_diff[v31_CSC_prot_diff$comparison == loop_frame[comp_counter],] 
+  # adjust p value (<<-- after this point no more data filtering)
+  result_subset$adj_pvalue = p.adjust(result_subset$pvalue, method="BH")
+  result_subset$pvalue      [result_subset$pvalue        < 2.220446e-16 ] = 2.220446e-16
+  result_subset$adj_pvalue  [result_subset$adj_pvalue    < 2.220446e-16 ] = 2.220446e-16
+  result_subset <- result_subset[order(result_subset$adj_pvalue),]  # sort by significance - good on top
+  result_subset <- result_subset[!is.na(result_subset$log2FC), ]   # filter out all proteins that were not identified - all other should have calculated FC or +/-Inf assigned
+  #
+  poi_var <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/POI_lists/POI_lists.csv" , header = TRUE, sep = ",") %>%
+    filter(abTCR_chains_cd3_mgmanual != "") %>%
+    pull(abTCR_chains_cd3_mgmanual)
+  #
+  result_subset <- result_subset %>%
+    mutate(cspa_2015       = ifelse(entry %in% surface_annotations$cspa_2015      , "yes", "no"),
+           surfy_2018      = ifelse(entry %in% surface_annotations$surfy_2018     , "yes", "no"),
+           tcsa_2021       = ifelse(entry %in% surface_annotations$tcsa_2021      , "yes", "no"),
+           meta_surfaceome = ifelse(entry %in% surface_annotations$cspa_2015surfy_2018tcsa_2021cd_antigen_veneer_proteome_high, "yes", "no"),
+           cd_antigen      = ifelse(entry %in% surface_annotations$cd_antigen     , "yes", "no"),
+           uniprot_2023    = ifelse(entry %in% surface_annotations$uniprot_2023   , "yes", "no"),
+           poi   =      ifelse(entry_name %in% poi_var                            , "yes", "no")    # pois are given as entry_names in MGs poi meta file
+    )  
+  
+  # # string interactor mapping
+  # string_interactors <- string[string$protein1_entry_name %in% string_targets[[ experiment_conditions[[comp_counter]] ]],] %>% 
+  #   dplyr::select(protein2_entry_name) %>% 
+  #   unique()
+  # result_subset <- result_subset %>% # map interactors to data 
+  #   mutate(string_interactor = case_when(entry_name %in% string_interactors[[1]] ~ "yes", TRUE ~ "no") ) 
+  
+  super_volcano_data <- result_subset
+  # specify plot dot colors for suvo
+  super_volcano_data  <-  super_volcano_data %>%
+    mutate(suvo_plot_color = case_when(
+      # super_volcano_data[[plot_fill_volcano]] == "yes" & string_interactor == "yes" ~ "surface+string",    # is both plot_fill_volcano and string_interactor
+      super_volcano_data[[plot_fill_volcano]] == "yes" ~ "surface",                                        # is plot_fill_volcano
+      # string_interactor == "yes" ~ "string",                                                               # is string_interactor
+      TRUE ~ "other"                                                                                       # is neither 
+    ))
+  # specify plot dot occupacy (incomplete dataframe make plot dots a bit transparent --> (alpha) column - adjustet_t-test does not result in missing df proteins. define here how they are displayed in plots
+  super_volcano_data <- super_volcano_data %>% # recommended to readjust below part for datasets that contains replicate number > 4
+    mutate(plot_alpha = case_when(replicate_ids_left_right %in% c("1_vs_1", "1_vs_2", "2_vs_1", "0_vs_1", "1_vs_0", "2_vs_0", "0_vs_2") ~ plot_no_df_occupacy,  TRUE ~ 1.0 )) %>%
+    # highlight data point categories (pvalue defined at script start. specifies pvalue or adj_pvalue to be used for subsetting & "yes" tagging)
+    mutate(sig_left  = ifelse(!is.na(.data[[pvalue]]) &               
+                                .data[[pvalue]] < filter_sig_cutoff &
+                                log2FC < -filter_log2fc_cutoff, "yes", 
+                              ifelse(is.na(.data[[pvalue]]), "", "")),
+           sig_right = ifelse(!is.na(.data[[pvalue]]) & 
+                                .data[[pvalue]] < filter_sig_cutoff & 
+                                log2FC > +filter_log2fc_cutoff, "yes", 
+                              ifelse(is.na(.data[[pvalue]]), "", ""))) %>%
+    # aggregate testing information into categories
+    mutate(no_df_left  = ifelse(is.nan(.data[[pvalue]]) & log2FC < -filter_log2fc_cutoff, "yes", ""),     # noDF
+           no_df_right = ifelse(is.nan(.data[[pvalue]]) & log2FC > +filter_log2fc_cutoff, "yes", ""),     # noDF
+           unique_hit_left  = ifelse(log2FC == "-Inf", "yes", ""),  # Infinite FC
+           unique_hit_right = ifelse(log2FC ==  "Inf", "yes", ""),
+           aggreg_left  = ifelse(sig_left  == "yes" |  no_df_left == "yes" |  unique_hit_left == "yes" , "yes", ""),     # dump Left and Right info into individual columns for quick and dirty analysis
+           aggreg_right = ifelse(sig_right == "yes" | no_df_right == "yes" | unique_hit_right == "yes" , "yes", ""),
+           aggreg_unique_hits = case_when(        #
+             unique_hit_left  == "yes" ~ "-", 
+             unique_hit_right == "yes" ~ "+",
+             TRUE ~ ""),
+           left_right  = ifelse(aggreg_right  == "yes" |  aggreg_left == "yes" , "yes", "")) 
+  
+  super_volcano_data$protein_name <- substr(super_volcano_data$protein_name, 1, 80)  # truncate to allow nice displaying in interactive volcano plots
+  # add uniprot infos to __superVolcanoData__ export df 
+  super_volcano_data <- merge(super_volcano_data, proteome_upsp_202501[,c("entry", "function_cc", "gene_ontology_molecular_function", "glycosylation")], by = "entry")
+  
+  # order data. 1) meta_surfaceome 
+  super_volcano_data <- super_volcano_data %>% 
+    arrange(meta_surfaceome) # surface hits on bottom of df >> plotted last = on top
+  
+  ## For Plotting dataset is separated into different cases
+  subset_volcano   <- super_volcano_data[!is.na(super_volcano_data[[pvalue]]), ]    # 1) Fold-chang
+  
+  foldchangelimit_max <- max(v31_CSC_prot_diff$log2FC, na.rm = TRUE)
+  foldchangelimit_min <- min(v31_CSC_prot_diff$log2FC, na.rm = TRUE)
+  
+  
+  subset_volcano <- subset_volcano %>%
+    mutate(significance = as.factor(ifelse(-log10(.data[[pvalue]]) >= -log10(filter_sig_cutoff)   &    abs(log2FC) >= filter_log2fc_cutoff,   "yes",   "no")),  # Mark significant hits
+           plot_label   = ifelse(.data[[plot_label_volcano]] == "yes", gsub("_HUMAN", "", entry_name), "")) # Assign plot label 
+  
+  # Helper frame for significance lines
+  segmentation <- data.frame(x = c(foldchangelimit_min, filter_log2fc_cutoff, -filter_log2fc_cutoff, filter_log2fc_cutoff),
+                             y = c(-log10(filter_sig_cutoff), -log10(filter_sig_cutoff), -log10(filter_sig_cutoff), -log10(filter_sig_cutoff)),
+                             xend = c(-filter_log2fc_cutoff, foldchangelimit_max, -filter_log2fc_cutoff, filter_log2fc_cutoff),
+                             yend = c(-log10(filter_sig_cutoff), -log10(filter_sig_cutoff), max(-log10(subset_volcano[[pvalue]])), max(-log10(subset_volcano[[pvalue]]))),
+                             col = rep("black", times=4),
+                             linetype = rep("dashed", times=4))
+  
+  # Volcano Plot 
+  plot_volcano <- ggplot(subset_volcano,
+                         aes(x=log2FC, y=-log10(.data[[pvalue]]),# label=plot_label, 
+                             text= paste0("Protein: <b>", entry_name, "</b><br>", "Protein Name: <b>", protein_name, "</b><br>", "Meta Surfaceome: <b>", 
+                                          meta_surfaceome, "</b><br>", "Replicate IDs: ", replicate_ids_left_right, "<br>" , "Feature IDs : ", features_left_right_overall, "<br>" ))
+  ) +
+    geom_segment(x=segmentation$x[1], y=segmentation$y[1], xend=segmentation$xend[1], yend=segmentation$yend[1], linetype="dashed", col="darkgrey", linewidth = 0.4) +
+    geom_segment(x=segmentation$x[2], y=segmentation$y[2], xend=segmentation$xend[2], yend=segmentation$yend[2], linetype="dashed", col="darkgrey", linewidth = 0.4) +
+    geom_segment(x=segmentation$x[3], y=segmentation$y[3], xend=segmentation$xend[3], yend=segmentation$yend[3], linetype="dashed", col="darkgrey", linewidth = 0.4) +
+    geom_segment(x=segmentation$x[4], y=segmentation$y[4], xend=segmentation$xend[4], yend=segmentation$yend[4], linetype="dashed", col="darkgrey", linewidth = 0.4) +
+    xlim(foldchangelimit_min, foldchangelimit_max) +
+    geom_point(fill = c("#cc66ff", "#cc0000", "#0000EE", "#5F5F61")[match(subset_volcano$suvo_plot_color, c("surface+string", "surface", "string", "other"))],
+               shape = ifelse(subset_volcano$imputed_comparison == "yes", 23, 21),
+               alpha = subset_volcano$plot_alpha,
+               size = 1.5,
+               color = "white",
+               stroke = 0.4) +
+    # geom_label_repel(box.padding = 2, size=6, max.overlaps = 100000) +
+    labs(fill="meta_surfaceome") +
+    plot_theme() +
+    # theme(axis.title.x = element_blank(),
+    #       legend.position = "top",
+    #       text = element_text(size = 14),
+    #       axis.text = element_text(size = 12)) +
+    xlab(paste("log2(fold change)"   , sep ="")) +
+    ylab(paste("-log10(adj. p-value)", sep ="")) +
+  geom_label(label = unique(subset_volcano$plot_heading),
+             x      = -Inf,           # Places at left edge of plot
+             y      =  Inf,           # Places at top edge of plot
+             hjust  = 0,              # Aligns box to the left of (x, y)
+             vjust  = 1,              # Aligns box to the top of (x, y)
+             label.padding = unit(0.2, "lines"),
+             label.size = 0.5,
+             color = "white",
+             fill  = "black",
+             size  = 12/.pt) +
+    geom_label(label = unique(result_subset$ttest_reference),
+               x     = foldchangelimit_min+1.3, y=0,
+               label.padding = unit(0.2, "lines"),
+               label.size = 0.5,
+               color = "black",
+               fill  = "grey",
+               size  = 12/.pt) +
+    geom_label(label = unique(result_subset$ttest_condition),
+               x     =  foldchangelimit_max-1.2, y=0,
+               label.padding = unit(0.2, "lines"),
+               label.size = 0.5,
+               color = "black",
+               fill  = "grey",
+               size  = 12/.pt) 
+  #  plot_volcano
+  ggsave(
+    filename = paste0("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_CSC-", count_var, ".png"),
+    plot   = plot_volcano,
+    width  = 8.00,  # 10.66,  # document is 16 cm wide             (before 12cm used)
+    height = 8.00,  # 4/3 width/high ratio is common      (before 8 cm used)
+    units  = "cm",
+    dpi    = 300    # default for good quality
+  )  
+  
+  count_var = count_var + 1
+}
+##############################################################################################################################################################################
+# go enrichment / complex plots #####################################################################################################################
+v31_CSC_sig_up <- v31_CSC_prot_diff %>% 
+  dplyr::filter(log2FC >= 1 & adj_pvalue <= 0.05) 
+v31_CSC_sig_down <- v31_CSC_prot_diff %>% 
+  dplyr::filter(log2FC <= -1 & adj_pvalue <= 0.05) 
+
+v31_CSC_sig_upDown <- v31_CSC_prot_diff %>% 
+  dplyr::filter(log2FC >= 1 & adj_pvalue <= 0.05 | log2FC <= -1 & adj_pvalue <= 0.05) %>%
+  mutate(plot_heading_2 = case_when(plot_heading == "CD4+"     & log2FC >= 1 & adj_pvalue <= 0.05 ~ "CD4+__n",
+                                    plot_heading == "CD4+"     & log2FC <= -1& adj_pvalue <= 0.05 ~ "CD4+__m",
+                                    plot_heading == "Naive"    & log2FC >= 1 & adj_pvalue <= 0.05 ~ "Naive__CD4+",
+                                    plot_heading == "Naive"    & log2FC <= -1& adj_pvalue <= 0.05 ~ "Naive__CD8+",
+                                    plot_heading == "CD8+"     & log2FC >= 1 & adj_pvalue <= 0.05 ~ "CD8+__n",
+                                    plot_heading == "CD8+"     & log2FC <= -1& adj_pvalue <= 0.05 ~ "CD8+__m",
+                                    plot_heading == "Memory"   & log2FC >= 1 & adj_pvalue <= 0.05 ~ "Memory__CD4+",
+                                    plot_heading == "Memory"   & log2FC <= -1& adj_pvalue <= 0.05 ~ "Memory__CD8+",
+                                    TRUE ~ NA    ))
+
+
+# Fig3.3.2: GO term bubble plot  ..........................................................................................................................................................................................................................................
+library(gprofiler2)      # GO gost 
+library(org.Hs.eg.db)    # GO gost
+library(biomaRt)         # GO gost
+
+# perform GO enrichment for all 
+gost_CSC_sigUpDown <- NULL
+for (i in unique(v31_CSC_sig_upDown$plot_heading_2)) {
+  go_result <- go_gost(query_list    = unique(v31_CSC_sig_upDown %>% filter(plot_heading_2 == i) %>% pull(entry)),
+                       set = i,
+                       max_term_size = 100,
+                       # # NULL = all GO branches;       a vector of data sources to use. Currently, these include GO (GO:BP, GO:MF, GO:CC to select a particular GO branch), KEGG, REAC, TF, MIRNA, CORUM, HP, HPA, WP. Please see the g:GOSt web tool for the comprehensive list and details on incorporated data sources.
+                       go_source     = c("GO:BP", "GO:MF", "GO:CC", # basic
+                                         "CORUM",                   # complexes
+                                         "KEGG","REAC", "WP",       # signaling 
+                                         "HPA", "HP", "HPA" #,      # phenotype (human phenotype atlas) 
+                                         # "TF", "MIRNA"            # regulatory DNA motifs
+                       )   
+  )                    
+  gost_CSC_sigUpDown <- rbind(gost_CSC_sigUpDown,go_result)
+}
+
+# issue with some complexes from CORUM that AB+C complexes are cosidered to have 2 components - which is wrong
+# >> manually correct (cant think of universal fix right now)
+gost_CSC_sigUpDown <- gost_CSC_sigUpDown %>%
+  mutate(ID_count    = str_count(intersection_gene,",")+1)
+
+# combine GO sets to one long df
+gost_CSC_sigUpDown <- gost_CSC_sigUpDown %>%
+  group_by(term_name) %>%
+  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
+  ungroup() %>%
+  distinct(term_name, comparison, recall, .keep_all = TRUE) 
+
+## plot GO result =====================================================================================================================================================
+# Define order and elements to that are to be plotted together 
+group_filters <- list( 
+  c("Naive__CD8+", "Naive__CD4+", "Memory__CD8+","Memory__CD4+", "CD4+__m", "CD4+__n", "CD8+__m" , "CD8+__n"))
+## full recall plot ---------------------------------------------------------------
+# Define common plot parameters
+min_recall = 0.5
+common_CSC_diff_params <- list( 
+  data  = gost_CSC_sigUpDown %>% dplyr::filter(!grepl("CORUM", evidence_codes) & term_size > 1),  
+  min_recall = min_recall,    max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    
+  title_var = paste0("g:GOSt Recall >=" , min_recall))
+# Loop through group filters and create plots
+gost_CSC_diff_result_recall <- lapply(group_filters, function(filter) {
+  # Call the plotting function, which now returns a list: list(plot, dataframe)
+  result_list <- do.call(plot_dual_distance_bubble, c(common_CSC_diff_params, list(group_filter = filter)))
+  plot <- result_list[[1]]  # Extract plot object
+  dataframe <- result_list[]  # Extract dataframe (optional: use/store as needed)
+  # Adjust plot theme if filter is NULL
+  if (is.null(filter)) {
+    plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  }
+  print(plot)  # display plot
+  return(result_list) # store both plot and dataframe
+})
+
+gost_CSC_diff_result_recall[[1]][[1]] # plot for group_filters[1]
+gost_CSC_diff_recall_table        <- gost_CSC_diff_result_recall[[1]][[2]] # <<<<<<< result table for group_filters[1] list element 2
+gost_CSC_diff_term_proteins_maxID <- gost_CSC_diff_result_recall[[1]][[2]] %>%
+  dplyr::select(term_name, term_size, recall, evidence_codes, intersection_gene) %>% 
+  group_by(term_name) %>%
+  slice_max(recall, n = 1) %>% # keep top 1 independent (line above) of term 
+  ungroup() %>%
+  distinct() %>%
+  arrange(desc(row_number()))  # inverts order of df so easy to compare output table with plot
+
+write.csv(gost_CSC_diff_term_proteins_maxID, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_CSC_go_protein_maxID.csv"   , row.names = FALSE)
+
+# export plot of interest 
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_CSC_diff_go_recall.png",
+  plot   = gost_CSC_diff_result_recall[[1]][[1]],
+  width  = 38,  # document is 16 cm wide             (before 12cm used)
+  height = 24,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+### ------
+gost_CSC_prot <- NULL
+for (i in unique(v31_CSC_prot$condition)) {
+  go_result <- go_gost(query_list    = unique(v31_CSC_prot %>% filter(condition == i) %>% pull(entry)),
+                       set = i,
+                       max_term_size = 100,
+                       # # NULL = all GO branches;       a vector of data sources to use. Currently, these include GO (GO:BP, GO:MF, GO:CC to select a particular GO branch), KEGG, REAC, TF, MIRNA, CORUM, HP, HPA, WP. Please see the g:GOSt web tool for the comprehensive list and details on incorporated data sources.
+                       go_source     = c("GO:BP", "GO:MF", "GO:CC", # basic
+                                         # "CORUM",                   # complexes
+                                         "KEGG","REAC", "WP",       # signaling 
+                                         "HPA", "HP", "HPA" #,      # phenotype (human phenotype atlas) 
+                                         # "TF", "MIRNA"            # regulatory DNA motifs
+                       )   
+  )                    
+  gost_CSC_prot <- rbind(gost_CSC_prot,go_result)
+}
+gost_CSC_prot <- gost_CSC_prot %>%
+  mutate(ID_count    = str_count(intersection_gene,",")+1)
+gost_CSC_prot <- gost_CSC_prot %>%
+  group_by(term_name) %>%
+  mutate(overlap = paste(sort(unique(comparison)), collapse = "_")) %>%
+  ungroup() %>%
+  distinct(term_name, comparison, recall, .keep_all = TRUE) 
+gost_CSC_prot <- gost_CSC_prot %>%
+  mutate(comparison = gsub("nCD4", "nCD4+", 
+                           gsub("nCD8", "nCD8+", 
+                                gsub("nnCD8", "mCD8+", 
+                                     gsub("nnCD4", "mCD4+", comparison)))))
+group_filters <- list( 
+  c("nCD4+", "mCD4+", "nCD8+", "mCD8+"))
+## full recall plot ---------------------------------------------------------------
+# Define common plot parameters
+min_recall = 0.5
+common_params_CSC_prot <- list( 
+  data  = gost_CSC_prot, #%>% dplyr::filter(grepl("CORUM", evidence_codes)),  
+  min_recall = min_recall,    max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    
+  title_var = paste0("g:GOSt Recall >=" , min_recall))
+# Loop through group filters and create plots
+gost_CSC_prot_result_recall <- lapply(group_filters, function(filter) {
+  # Call the plotting function, which now returns a list: list(plot, dataframe)
+  result_list <- do.call(plot_dual_distance_bubble, c(common_params_CSC_prot, list(group_filter = filter)))
+  plot <- result_list[[1]]  # Extract plot object
+  dataframe <- result_list[]  # Extract dataframe (optional: use/store as needed)
+  # Adjust plot theme if filter is NULL
+  if (is.null(filter)) {
+    plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  }
+  print(plot)  # display plot
+  return(result_list) # store both plot and dataframe
+})
+
+gost_CSC_prot_result_recall[[1]][[1]] # plot for group_filters[1]
+gost_CSC_prot_recall_table        <- gost_CSC_prot_result_recall[[1]][[2]] # <<<<<<< result table for group_filters[1] list element 2
+gost_CSC_prot_term_proteins_maxID <- gost_CSC_prot_result_recall[[1]][[2]] %>%
+  dplyr::select(term_name, term_size, recall, evidence_codes, intersection_gene) %>% 
+  group_by(term_name) %>%
+  slice_max(recall, n = 1) %>% # keep top 1 independent (line above) of term 
+  ungroup() %>%
+  distinct() %>%
+  arrange(desc(row_number()))  # inverts order of df so easy to compare output table with plot
+
+write.csv(gost_CSC_prot_term_proteins_maxID, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_CSC_prot_go_protein_maxID.csv"   , row.names = FALSE)
+
+# export plot of interest 
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_CSC_prot_go_recall.png",
+  plot   = gost_CSC_prot_result_recall[[1]][[1]],
+  width  = 38,  # document is 16 cm wide             (before 12cm used)
+  height = 35,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
+
+
+
+
+
+#  =========================================================================================================================================================================================================================
 # LUX =========================================================================================================================================================================================================================
+v31_LUX_data_prot   <- rbind( read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_4pTss/_data_prot_level.csv"),
+                              read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_ss_meta/_data_prot_level.csv"),
+                              read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_full_meta/_data_prot_level.csv")) %>%  
+  as.data.frame() %>%
+  dplyr::select(-X) # determine comparison overlap
+
 v31_LUX_data_prot_diff_abundance   <- rbind( read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_4pTss/_data_prot_diff_abundance.csv"),
                          read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_ss_meta/_data_prot_diff_abundance.csv"),
                          read.csv("/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/v31_LUX_FP20_HoxHoxox_semi_6aa__4ss/_output_1-2_ludo_adjp_0.7string_shs2.27_full_meta/_data_prot_diff_abundance.csv")) %>%  
@@ -1152,8 +1659,8 @@ upset_data <- bind_rows( # ""  ""  "" "" ""   ""   ""   ""  ""
   tibble(entry = v31_LUX_data_prot_diff_abundance_sigup  %>% filter(plot_heading == "Meta panT")  %>% pull(entry) %>% unique(),      set = "Meta panT"),
   tibble(entry = v31_LUX_data_prot_diff_abundance_sigup  %>% filter(plot_heading == "Meta CD4+")  %>% pull(entry) %>% unique(),      set = "Meta CD4+"),
   tibble(entry = v31_LUX_data_prot_diff_abundance_sigup  %>% filter(plot_heading == "Meta CD8+")  %>% pull(entry) %>% unique(),      set = "Meta CD8+"),
-  tibble(entry = v31_LUX_data_prot_diff_abundance_sigup  %>% filter(plot_heading == "Meta Naive") %>% pull(entry) %>% unique(),     set = "Meta Naive"),
-  tibble(entry = v31_LUX_data_prot_diff_abundance_sigup  %>% filter(plot_heading == "Meta Memory")%>% pull(entry) %>% unique(),    set = "Meta Memory"),
+  tibble(entry = v31_LUX_data_prot_diff_abundance_sigup  %>% filter(plot_heading == "Meta Naive") %>% pull(entry) %>% unique(),      set = "Meta Naive"),
+  tibble(entry = v31_LUX_data_prot_diff_abundance_sigup  %>% filter(plot_heading == "Meta Memory")%>% pull(entry) %>% unique(),      set = "Meta Memory"),
   ) %>% 
   group_by(entry) %>% 
   summarise(sets = list(set)) %>%  # Critical: list column of set memberships
@@ -1181,29 +1688,44 @@ ggsave(
   dpi    = 300    # default for good quality
 )  
 
-# __________________________________________________________________________________________________________________________________________________________________________________________________________________
-# Figure 3.3.1_c: GO term bubble plot  ..........................................................................................................................................................................................................................................
 
+######################################################################################################################################################################################################################### ########################################################
+#### enrichment analysis - go, complex, family, domain, ... ######################################################################################################################################################################################################################
+# protein family enrichment analysis =====================================================================================================================================================
 sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/thesis_figures_functions", pattern = "\\.R$", full.names = TRUE), source)
+proteome_20250804 <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/human_upsp_202508.csv", header = TRUE) %>% setNames(gsub("\\.", "_", tolower(names(.)))) %>% setNames(gsub("__", "_", names(.))) %>% setNames(gsub("_$", "",  names(.)))
+
+# extend the dataset so each subset also contains panT information --> full set and set-panT proteins for correct determination of enrichment 
+v31_LUX_data_prot_diff_abundance_sigup_upsp <- v31_LUX_data_prot_diff_abundance_sigup %>%
+  mutate(plot_heading = gsub("Meta ", "", plot_heading)) %>%
+  dplyr::select(entry, plot_heading) %>%
+  left_join(proteome_20250804 %>% dplyr::select(entry, protein_families, domain_cc, domain_ft, drugbank, drugcentral), by = "entry")
+
+# Fig3.3.2: GO term bubble plot  ..........................................................................................................................................................................................................................................
 library(gprofiler2)      # GO gost 
 library(org.Hs.eg.db)    # GO gost
 library(biomaRt)         # GO gost
 
 # perform GO enrichment for all 
 gost_LUX <- NULL
-for (i in unique(v31_LUX_data_prot_diff_abundance_sigup$plot_heading)) {
-  go_result <- go_gost(query_list    = unique(v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading == i) %>% pull(entry)), set = i,
+for (i in unique(v31_LUX_data_prot_diff_abundance_sigup_upsp$plot_heading)) {
+  go_result <- go_gost(query_list    = unique(v31_LUX_data_prot_diff_abundance_sigup_upsp %>% filter(plot_heading == i) %>% pull(entry)),
+                       set = i,
                        max_term_size = 100,
                        # # NULL = all GO branches;       a vector of data sources to use. Currently, these include GO (GO:BP, GO:MF, GO:CC to select a particular GO branch), KEGG, REAC, TF, MIRNA, CORUM, HP, HPA, WP. Please see the g:GOSt web tool for the comprehensive list and details on incorporated data sources.
                        go_source     = c("GO:BP", "GO:MF", "GO:CC", # basic
                                          "CORUM",                   # complexes
-                                         "KEGG",                    # signaling 
-                                         "HPA"#,                   # phenotype (human phenotype atlas) 
-                                         #"REAC", "TF", "MIRNA", "HP", "HPA", "WP"
-                                         ))                    
+                                         "KEGG","REAC", "WP",       # signaling 
+                                         "HPA", "HP", "HPA" #,      # phenotype (human phenotype atlas) 
+                                         # "TF", "MIRNA"            # regulatory DNA motifs
+                                         )   
+                       )                    
   gost_LUX <- rbind(gost_LUX,go_result)
 }
-
+# issue with some complexes from CORUM that AB+C complexes are cosidered to have 2 components - which is wrong
+# >> manually correct (cant think of universal fix right now)
+gost_LUX <- gost_LUX %>%
+  mutate(ID_count    = str_count(intersection_gene,",")+1)
 # combine GO sets to one long df
 gost_LUX <- gost_LUX %>%
   group_by(term_name) %>%
@@ -1217,176 +1739,340 @@ gost_LUX <- gost_LUX %>%
                                         "integrin beta" = "ITGB",
                                         "alpha"         = "ITGA" , 
                                         "-beta"         = "-ITGB" , 
-                                        "interleukin "  = "IL")),
+                                        "interleukin "  = "IL",
+                                        "ab T cell"     = "alpha-beta T cell" # correct
+                                      )),
          term_name = str_replace(term_name, "ITGcomplex", "integrin complex")) %>%
-  distinct(term_name, comparison, recall, .keep_all = TRUE)       # remove redundant complex terms 
+  distinct(term_name, comparison, recall, .keep_all = TRUE)  %>% # remove redundant complex terms 
+  mutate(term_size   = case_when(term_name == "ITGA5-ITGB1-SPP1 complex"   ~ 3,
+                                 term_name == "ITGAV-ITGB1-SPP1 complex"   ~ 3,
+                                 term_name == "ITGA4-ITGB1-CD81 complex"   ~ 3,
+                                 term_name == "ITGA1-ITGB1-COL6A3 complex" ~ 3,
+                                 term_name == "ITGA1-ITGB1-PTPN2 complex"  ~ 3,
+                                 term_name == "ITGA4-ITGB1 complex"  ~ 2,
+                                 TRUE ~term_size),
+         recall       = ID_count/term_size) %>%         
+  dplyr::filter(!term_name %in% c("ITGAv-ITGB1 complex",    # duplicated name
+                                  "ITGA5-ITGB4 complex",    # wrong annotated in corum - acutally ITGA5-ITGB1 (contain in other term category - so removed corum term)
+                                  "ITGA3-ITGB1 complex")  ) # redundant through ITGA3-ITGB1-BSG complex 
 
-
-## plot GO result ------------------------------------------------------------------------------------------------------------------------
+## plot GO result =====================================================================================================================================================
 # Define order and elements to that are to be plotted together 
 group_filters <- list( 
-  c("Meta panT", "Meta CD4+" , "Meta CD8+" , "Meta Naive",  "Meta Memory", "Naive CD4+", "Memory CD4+", "Naive CD8+" , "Memory CD8+" ),# NULL,
-  c("Meta panT", "Meta CD4+" , "Meta CD8+" , "Meta Naive",  "Meta Memory"),
+  c("panT", "CD4+" , "CD8+" , "Naive",  "Memory", "Naive CD4+", "Memory CD4+", "Naive CD8+" , "Memory CD8+" ),# NULL,
+  c("panT", "CD4+" , "CD8+" , "Naive",  "Memory"),
   c("Naive CD4+", "Memory CD4+", "Naive CD8+" , "Memory CD8+")               )
 ## full recall plot ---------------------------------------------------------------
 # Define common plot parameters
+min_recall = 0.7
 common_params <- list( 
-  data  = gost_LUX,  min_recall = 1,    max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
-  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    title_var = "g:GOSt - Recall filtered" )
+  data  = gost_LUX, #%>% dplyr::filter(grepl("CORUM", evidence_codes)),  
+  min_recall = min_recall,    max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    
+  title_var = paste0("g:GOSt Recall >=" , min_recall))
 # Loop through group filters and create plots
-plots_go_LUX <- lapply(group_filters, function(filter) {
-  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
-  if (is.null(filter)) {     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))   }
+go_LUX_result_recall <- lapply(group_filters, function(filter) {
+  # Call the plotting function, which now returns a list: list(plot, dataframe)
+  result_list <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+  plot <- result_list[[1]]  # Extract plot object
+  dataframe <- result_list[]  # Extract dataframe (optional: use/store as needed)
+  # Adjust plot theme if filter is NULL
+  if (is.null(filter)) {
+    plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  }
   print(plot)  # display plot
-  return(plot) # store plot 
+  return(result_list) # store both plot and dataframe
 })
-# export plot of interest 
-ggsave(
-  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_go_recall.png",
-  plot   = plots_go_LUX[[1]],
-  width  = 32,  # document is 16 cm wide             (before 12cm used)
-  height = 24,  # 4/3 width/high ratio is common      (before 8 cm used)
-  units  = "cm",
-  dpi    = 300    # default for good quality
-)  
-## top n p value plot ---------------------------------------------------------------
-top_n_pvalue_terms_go = 10
-# Define common plot parameters
-common_params <- list( 
-  data        = gost_LUX,      min_recall = 0,    # critial recall 0 !!!
-  # dynamically define p_value cutoff to obtain top n catgories (global minimum values count --> change of comparisons included affects displayed terms)
-  max_p_value = gost_LUX %>% arrange(p_value) %>% distinct(term_name, .keep_all = TRUE) %>% slice_head(n = top_n_pvalue_terms_go) %>% pull(p_value) %>% max(),    
-  grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
-  x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    title_var = "g:GOSt - pValue filtered" )
-# Loop through group filters and create plots
-plots_go_LUX <- lapply(group_filters, function(filter) {
-  plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
-  if (is.null(filter)) {     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))   }
-  print(plot)  # display plot
-  return(plot) # store plot 
-})
-# export plot of interest 
-ggsave(
-  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.x_go_pvalue.png",
-  plot   = plots_go_LUX[[1]],
-  width  = 32,  # document is 16 cm wide             (before 12cm used)
-  height = 12,  # 4/3 width/high ratio is common      (before 8 cm used)
-  units  = "cm",
-  dpi    = 300    # default for good quality
-)  
-
-# __________________________________________________________________________________________________________________________________________________________________________________________________________________
-# Figure Fig3.3.1_c: Cytoscape df mapping ..........................................................................................................................................................................................................................................
-# helper vecotrs to define unique sets 
-meta_all_but_naive_list    <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT",               "Meta Memory", "Meta CD4+", "Meta CD8+")) %>% pull(entry) %>% unique()
-meta_all_but_memory_list   <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT", "Meta Naive",                "Meta CD4+", "Meta CD8+")) %>% pull(entry) %>% unique()
-meta_all_but_CD4_list      <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory",              "Meta CD8+")) %>% pull(entry) %>% unique()
-meta_all_but_CD8_list      <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+"             )) %>% pull(entry) %>% unique()
-#
-meta_all_but_nCD4_list   <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+",               "Memory CD4+", "Naive CD8+",  "Memory CD8+")) %>% pull(entry) %>% unique()
-meta_all_but_nnCD4_list  <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+", "Naive CD4+",                "Naive CD8+",  "Memory CD8+")) %>% pull(entry) %>% unique()
-meta_all_but_nCD8_list   <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+", "Naive CD4+", "Memory CD4+"              ,  "Memory CD8+")) %>% pull(entry) %>% unique()
-meta_all_but_nnCD8_list  <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+", "Naive CD4+", "Memory CD4+", "Naive CD8+"                )) %>% pull(entry) %>% unique()
-
-# network will be restricted to selected "nice to explain" categroies (weird overlaps ignored or introduced later lets see)
-cytoscape_bait_network <- v31_LUX_data_prot_diff_abundance_sigup %>%
-  mutate(bait = case_when(
-    # panT master core overlap list
-    plot_heading == "Meta panT" ~ "panT",
-    # meta subsets
-    plot_heading == "Meta Naive"  & !(entry %in% meta_all_but_naive_list)  ~ "Naive",   # 
-    plot_heading == "Meta Memory" & !(entry %in% meta_all_but_memory_list) ~ "Memory",
-    plot_heading == "Meta CD4+"   & !(entry %in% meta_all_but_CD4_list)    ~ "CD4+",
-    plot_heading == "Meta CD8+"   & !(entry %in% meta_all_but_CD8_list)    ~ "CD8+",
-    # subset unique
-    plot_heading == "Naive CD4+"  & !(entry %in% meta_all_but_nCD4_list )  ~ "Naive CD4+",  # exclude any proteins from unique-to-subset assignment that are also contained in any of meta categories
-    plot_heading == "Memory CD4+" & !(entry %in% meta_all_but_nnCD4_list)  ~ "Memory CD4+",
-    plot_heading == "Naive CD8+"  & !(entry %in% meta_all_but_nCD8_list )  ~ "Naive CD8+",
-    plot_heading == "Memory CD8+" & !(entry %in% meta_all_but_nnCD8_list)  ~ "Memory CD8+",
-    TRUE ~ NA_character_
-  )) %>% 
-  filter(!is.na(bait)) %>%   # eliminate any unassigned proteins
-  dplyr::select(entry, entry_name, bait) %>%
+go_LUX_result_recall[[1]][[1]] # plot for group_filters[1]
+go_LUX_recall_table        <- go_LUX_result_recall[[1]][[2]] # <<<<<<< result table for group_filters[1] list element 2
+go_LUX_term_proteins_maxID <- go_LUX_result_recall[[1]][[2]] %>%
+  dplyr::select(term_name, term_size, recall, evidence_codes, intersection_gene) %>% 
+  group_by(term_name) %>%
+  slice_max(recall, n = 1) %>% # keep top 1 independent (line above) of term 
+  ungroup() %>%
   distinct() %>%
-  left_join(proteome_upsp_202501 %>% 
-              dplyr::select(entry, gene_names_primary, protein_names), 
-            by = "entry") %>%
-  dplyr::select(bait, gene_names_primary, entry, entry_name, protein_names) %>%
-  dplyr::rename("prey" = "gene_names_primary")
+  arrange(desc(row_number()))  # inverts order of df so easy to compare output table with plot
 
-# protein family enrichment analysi =====================================================================================================================================================
-sapply(list.files(path = "/Users/mgesell/Desktop/currentR/git/surfaceome_hybrid_script/thesis_figures_functions", pattern = "\\.R$", full.names = TRUE), source)
-proteome_20250804 <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/human_upsp_202508.csv", header = TRUE) %>% setNames(gsub("\\.", "_", tolower(names(.)))) %>% setNames(gsub("__", "_", names(.))) %>% setNames(gsub("_$", "",  names(.)))
+write.csv(go_LUX_term_proteins_maxID, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_go_protein_maxID.csv"   , row.names = FALSE)
 
-# extend the dataset so each subset also contains panT information --> full set and set-panT proteins for correct determination of enrichment 
-v31_LUX_data_prot_diff_abundance_sigup_ <- v31_LUX_data_prot_diff_abundance_sigup %>%
-  mutate(plot_heading = str_replace_all(plot_heading, c("Meta panT"   = "panT", "Meta Naive"  = "Naive", "Meta Memory" = "Memory","Meta CD4+"   = "CD4\\+", "Meta CD8\\+"   = "CD8\\+",
-                                                        "Naive CD4\\+"  = "Naive CD4\\+", "Memory CD4\\+" = "Memory CD4\\+", "Naive CD8\\+"  = "Naive CD8\\+","Memory CD8\\+" = "Memory CD8\\+"))) %>%
-  dplyr::select(entry, plot_heading)
-# extend dataset subsets - unique(CD8 is panT + CD8)
-df_list <- list(
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "Naive" , "CD4+", "Naive CD4+" ))   %>%    mutate(plot_heading = "Naive CD4+"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "Naive" , "CD8+", "Naive CD8+" ))   %>%    mutate(plot_heading = "Naive CD8+"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "Memory", "CD4+", "Memory CD4+"))   %>%    mutate(plot_heading = "Memory CD4+"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "Memory", "CD8+", "Memory CD8+"))   %>%    mutate(plot_heading = "Memory CD8+"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "Naive" , "Naive CD4+" , "Naive CD8+" ))   %>%    mutate(plot_heading = "Naive"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "Memory", "Memory CD4+", "Memory CD8+"))   %>%    mutate(plot_heading = "Memory"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "CD4+"  , "Naive CD4+" , "Memory CD4+"))   %>%    mutate(plot_heading = "CD4+"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT", "CD8+"  , "Naive CD8+" , "Memory CD8+"))   %>%    mutate(plot_heading = "CD8+"),
-  v31_LUX_data_prot_diff_abundance_sigup_ %>%    filter(plot_heading %in% c("panT"                                 ))   %>%    mutate(plot_heading = "panT")
-)
-v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED <- bind_rows(df_list) %>%  distinct() %>%
-  left_join(proteome_20250804 %>% dplyr::select(entry, entry_name, involvement_in_disease, domain_cc, domain_ft, topological_domain, protein_families),  by = "entry") 
+# export plot of interest 
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.2_go_recall.png",
+  plot   = go_LUX_result_recall[[1]][[1]],
+  width  = 38,  # document is 16 cm wide             (before 12cm used)
+  height = 21,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  
 
-# protein family enrichment ..................................................................................................
-plot_heading_name_list              <- unique(v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED$plot_heading)
+# ## exclude recall = 1 go plot --------------------------------------------
+# LUX_go_top10other <- gost_LUX %>%  # extract top 10 recall values with recall < 1
+#   dplyr::select(term_name, recall) %>%
+#   distinct() %>%
+#   filter(recall < 0.8) %>%            # Only terms with recall < ...
+#   arrange(desc(recall)) %>%
+#   slice_head(n = 10) %>%
+#   pull(term_name)
+# 
+# common_params <- list( 
+#   data  = gost_LUX %>% dplyr::filter(term_name %in% LUX_go_top10other),                # Select top 10 rows,   # <<<
+#   min_recall = 0,                                   # <<<
+#   max_p_value = 0.05,    grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+#   x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    title_var = "g:GOSt - Recall 1" )
+# # Loop through group filters and create plots
+# go_LUX_result_go <- lapply(group_filters, function(filter) {
+#   # Call the plotting function, which now returns a list: list(plot, dataframe)
+#   result_list <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+#   plot <- result_list[[1]]  # Extract plot object
+#   dataframe <- result_list[]  # Extract dataframe (optional: use/store as needed)
+#   # Adjust plot theme if filter is NULL
+#   if (is.null(filter)) {
+#     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#   }
+#   print(plot)  # display plot
+#   return(result_list) # store both plot and dataframe
+# })
+# go_LUX_result_go[[1]][[1]] # plot for group_filters[1]
+# go_LUX_go_table <- go_LUX_result_go[[2]][[2]] # <<<<<<< result table for group_filters[1]
+# # export plot of interest 
+# ggsave(
+#   filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.2_go_top10other.png",
+#   plot   = go_LUX_result_go[[1]][[1]],
+#   width  = 32,  # document is 16 cm wide             (before 12cm used)
+#   height = 24,  # 4/3 width/high ratio is common      (before 8 cm used)
+#   units  = "cm",
+#   dpi    = 300    # default for good quality
+# )  
+
+# ## top n p value plot ---------------------------------------------------------------
+# top_n_pvalue_terms_go = 10
+# # Define common plot parameters
+# common_params <- list( 
+#   data        = gost_LUX,      min_recall = 0,    # critial recall 0 !!!
+#   # dynamically define p_value cutoff to obtain top n catgories (global minimum values count --> change of comparisons included affects displayed terms)
+#   max_p_value = gost_LUX %>% arrange(p_value) %>% distinct(term_name, .keep_all = TRUE) %>% slice_head(n = top_n_pvalue_terms_go) %>% pull(p_value) %>% max(),    
+#   grouping = "comparison",    term_column = "term_name",    distance_column = "recall",    distance_method = "euclidean", # distance parameters
+#   x_var = "comparison",    y_var = "term_name",    size_var = "recall",    fill_var = "p_value",    title_var = "g:GOSt - pValue filtered" )
+# # Loop through group filters and create plots
+# go_LUX_result_p <- lapply(group_filters, function(filter) {
+#   plot <- do.call(plot_dual_distance_bubble, c(common_params, list(group_filter = filter)))
+#   if (is.null(filter)) {     plot <- plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))   }
+#   print(plot)  # display plot
+#   return(plot) # store plot 
+# })
+# go_LUX_result_p[[1]]
+# go_LUX_p_table <- go_LUX_result_p[[2]] # <<<<<<< result table
+# # export plot of interest 
+# ggsave(
+#   filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.2_go_pvalue.png",
+#   plot   = go_LUX_result_p[[1]],
+#   width  = 32,  # document is 16 cm wide             (before 12cm used)
+#   height = 12,  # 4/3 width/high ratio is common      (before 8 cm used)
+#   units  = "cm",
+#   dpi    = 300    # default for good quality
+# )  # end of gost baset enrichemtn analysis __________________________________________________________________________________________________________________
+
+
+# ## protein family enrichment =====================================================================================================================================================
+# # qid list result #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#- #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
+# protein_entry_vector <- read.csv("/Users/mgesell/Downloads/targets.csv", header = TRUE) %>% dplyr::filter(entry != "" & CPI.Target == "Yes"
+#                                                                                                           ) %>% pull(entry)
+# enriched_go <- go_gost(query_list    = protein_entry_vector,
+#                        set = "Protein Families: LUX_targets",   max_term_size = 100,
+#                        # # NULL = all GO branches;       a vector of data sources to use. Currently, these include GO (GO:BP, GO:MF, GO:CC to select a particular GO branch), KEGG, REAC, TF, MIRNA, CORUM, HP, HPA, WP. Please see the g:GOSt web tool for the comprehensive list and details on incorporated data sources.
+#                        go_source     = c("GO:BP", "GO:MF", "GO:CC", # basic
+#                                          "CORUM",                   # complexes
+#                                          "KEGG","REAC", "WP",       # signaling 
+#                                          "HPA", "HP", "HPA" #,      # phenotype (human phenotype atlas) 
+#                                          # "TF", "MIRNA"            # regulatory DNA motifs
+#                        )) 
+# plot_dual_distance_bubble(data = enriched_go ,  min_recall = 0.7,    max_p_value = 0.05,   
+#   group_filter = unique(enriched_go$comparison),
+#   grouping = "comparison",   term_column = "term_name",    distance_column = "recall",    
+#   distance_method = "euclidean", # distance parameters
+#   x_var = "comparison"  ,    y_var = "term_name",    size_var = "recall",    
+#   fill_var = "p_value"    ,    title_var = "g:GOSt" # plot parameters
+# )
+# 
+# 
+# (enriched_go)  c(common_params, list(group_filter = filter))
+# enriched_protein_families <- pF_pD_enrichment_analysis(data_subset_name     = "Protein Families: LUX_targets",
+#                                                        protein_entry_vector = protein_entry_vector,
+#                                                        mode = "protein_family")
+# enriched_protein_domains <- pF_pD_enrichment_analysis(data_subset_name      = "Protein Domains: LUX_targets",
+#                                                        protein_entry_vector = protein_entry_vector,
+#                                                        mode = "domain_ft")
+# enriched_protein_families[[1]]
+# enriched_protein_domains[[1]]
+# enriched_protein_families[[2]]
+# enriched_protein_domains[[2]]
+#  #___________________________________________________________________________________________________________________________
+
+group_filters <- list(c("panT", "CD4+" , "CD8+" , "Naive",  "Memory", "Naive CD4+", "Memory CD4+", "Naive CD8+" , "Memory CD8+" ))
 protein_fam_meta_entrichment_table  <- NULL # empty df
 protein_fam_meta_proteins           <- NULL # empty df
-for (i in 1:length(plot_heading_name_list)) {
-  protein_entry_vector <- v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED %>% 
-    dplyr::filter(plot_heading == plot_heading_name_list[i]) %>% # comment this line out to get full dataset view
+for (i in 1:length(group_filters[[1]])) {
+  protein_entry_vector <- v31_LUX_data_prot_diff_abundance_sigup_upsp %>% 
+    dplyr::filter(plot_heading == group_filters[[1]][i]) %>% # comment this line out to get full dataset view
     pull(entry) %>% unique()
-  enriched_protein_families <- pF_pD_enrichment_analysis(data_subset_name     = plot_heading_name_list[i] ,
-                                                                  protein_entry_vector = protein_entry_vector,
-                                                                  mode = "protein_family")
+  enriched_protein_families <- pF_pD_enrichment_analysis(data_subset_name     = group_filters[[1]][i] ,
+                                                         protein_entry_vector = protein_entry_vector,
+                                                         mode = "protein_family")
   print(enriched_protein_families[[1]])   # volcano plot
   
   protein_fam_meta_entrichment_table <- rbind(protein_fam_meta_entrichment_table, enriched_protein_families[[2]])# term table
   protein_fam_meta_proteins          <- rbind(protein_fam_meta_proteins         , enriched_protein_families[[3]]) # term proteins
 }
-plot_dual_distance_bubble(data = protein_fam_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
-                          group_filter = unique(protein_fam_meta_entrichment_table$plot_heading),
+# isolate per term all proteins that were detected
+pf_overall_proteins_per_term <- protein_fam_meta_proteins %>%
+  group_by(term) %>%
+  summarise(overall_proteins_per_term = n_distinct(entry)) %>%
+  ungroup()
+pf_proteins_per_term <- protein_fam_meta_proteins %>%
+  dplyr::select(entry, term) %>%
+  distinct() %>%
+  left_join(dplyr::select(proteome_upsp_202501, entry, gene_names_primary), by = "entry") %>%
+  dplyr::select(term, gene_names_primary) %>%
+  group_by(term) %>%
+  summarise(gene_name = paste(unique(gene_names_primary), collapse = ", "))
+# merge
+pf_meta_genes_maxID <- pf_overall_proteins_per_term %>%
+  left_join(pf_proteins_per_term, by = "term") 
+
+protein_fam_meta_entrichment_table <- protein_fam_meta_entrichment_table %>% arrange(desc(recall))
+write.csv(protein_fam_meta_entrichment_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_table.csv"   , row.names = FALSE)
+write.csv(protein_fam_meta_proteins         , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_proteins.csv", row.names = FALSE)
+write.csv(pf_meta_genes_maxID               , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pf_genes.csv", row.names = FALSE)
+#    protein_fam_meta_proteins  # <<<<<<<<<<<
+#    protein_fam_meta_proteins %>% dplyr::filter(term == "ITAM") %>% pull(entry_name) %>% unique()
+#
+result_pf_enrich <- plot_dual_distance_bubble(data = protein_fam_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
+                          group_filter = group_filters[[1]],
                           grouping = "plot_heading",   term_column = "term",    distance_column = "recall",    
                           distance_method = "euclidean", # distance parameters
                           x_var = "plot_heading"  ,    y_var = "term",    size_var = "recall",    
                           fill_var = "p_value"    ,    title_var = "Protein familiy enrichment" # plot parameters
 )
-protein_fam_meta_entrichment_table <- protein_fam_meta_entrichment_table %>% arrange(desc(recall))
+result_pf_enrich[[1]]
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.2_pf.png",
+  plot   = result_pf_enrich[[1]],
+  width  = 32,  # document is 16 cm wide             (before 12cm used)
+  height = 10,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good quality
+)  # end of protein familiy enrichment analysis __________________________________________________________________________________________________________________
+
 # protein domain enrichment ..................................................................................................
-plot_heading_name_list              <- unique(v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED$plot_heading)
+group_filters <- list(c("panT", "CD4+" , "CD8+" , "Naive",  "Memory", "Naive CD4+", "Memory CD4+", "Naive CD8+" , "Memory CD8+" ))
 protein_domain_meta_entrichment_table  <- NULL # empty df
 protein_domain_meta_proteins           <- NULL # empty df
-for (i in 1:length(plot_heading_name_list)) {
-  protein_entry_vector <- v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED %>% 
-    dplyr::filter(plot_heading == plot_heading_name_list[i]) %>% # comment this line out to get full dataset view
+for (i in 1:length(group_filters[[1]])) {
+  protein_entry_vector <- v31_LUX_data_prot_diff_abundance_sigup_upsp %>% 
+    dplyr::filter(plot_heading == group_filters[[1]][i]) %>% # comment this line out to get full dataset view
     pull(entry) %>% unique()
-  enriched_protein_domains <- pF_pD_enrichment_analysis(data_subset_name     = plot_heading_name_list[i] ,
-                                                         protein_entry_vector = protein_entry_vector,
-                                                         mode = "domain_ft")
+  enriched_protein_domains <- pF_pD_enrichment_analysis(data_subset_name     = group_filters[[1]][i],
+                                                        protein_entry_vector = protein_entry_vector,
+                                                        mode = "domain_ft")
   print(enriched_protein_domains[[1]])   # volcano plot
   
   protein_domain_meta_entrichment_table <- rbind(protein_domain_meta_entrichment_table, enriched_protein_domains[[2]]) # term table
   protein_domain_meta_proteins          <- rbind(protein_domain_meta_proteins         , enriched_protein_domains[[3]]) # term proteins
 }
-plot_dual_distance_bubble(data = protein_domain_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
-                          group_filter = unique(protein_domain_meta_entrichment_table$plot_heading),
+# isolate per term all proteins that were detected
+domain_overall_proteins_per_term <- protein_domain_meta_proteins %>%
+  group_by(term) %>%
+  summarise(overall_proteins_per_term = n_distinct(entry)) %>%
+  ungroup()
+domain_count_per_condition <- protein_domain_meta_proteins %>%
+  group_by(plot_heading, term) %>%
+  summarise(domain_count_per_condition = n()) %>%
+  group_by(term) %>% 
+  slice_max(domain_count_per_condition, n = 1) %>% # keep top 1 independent (line above) of term 
+  ungroup() %>%
+  dplyr::select(-plot_heading) %>%
+  distinct()
+domain_proteins_per_term <- protein_domain_meta_proteins %>%
+  dplyr::select(entry, term) %>%
+  distinct() %>%
+  left_join(dplyr::select(proteome_upsp_202501, entry, gene_names_primary), by = "entry") %>%
+  dplyr::select(term, gene_names_primary) %>%
+  group_by(term) %>%
+  summarise(gene_name = paste(unique(gene_names_primary), collapse = ", "))
+# merge
+protein_domain_meta_genes_maxID <- domain_overall_proteins_per_term %>%
+  left_join(domain_count_per_condition, by = "term") %>%
+  left_join(domain_proteins_per_term  , by = "term") 
+##  
+write.csv(protein_domain_meta_entrichment_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_table.csv"   , row.names = FALSE)
+write.csv(protein_domain_meta_proteins         , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_proteins.csv", row.names = FALSE)
+write.csv(protein_domain_meta_genes_maxID      , "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/enriched_pd_genes.csv", row.names = FALSE)
+
+protein_domain_meta_entrichment_table <- protein_domain_meta_entrichment_table %>% arrange(desc(recall))
+# protein_domain_meta_proteins  # <<<<<<<<<<<
+protein_domain_meta_proteins %>% dplyr::filter(term == "Ig-like V-type") %>% pull(entry_name) %>% unique()
+#
+result_pd_enrich <- plot_dual_distance_bubble(data = protein_domain_meta_entrichment_table,  min_recall = 0,    max_p_value = 0.05,   
+                          group_filter = group_filters[[1]],
                           grouping = "plot_heading",   term_column = "term",    distance_column = "recall",    
                           distance_method = "euclidean", # distance parameters
                           x_var = "plot_heading"  ,    y_var = "term",    size_var = "recall",    
                           fill_var = "p_value"    ,    title_var = "Protein domain enrichment" # plot parameters
 )
-protein_fam_meta_entrichment_table <- protein_domain_meta_entrichment_table %>% arrange(desc(recall))
-# ______________________________________________________________________________________________________________________________________________
+result_pd_enrich[[1]]
+ggsave(
+  filename = "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Fig3.3.2_pd.png",
+  plot   = result_pd_enrich[[1]],
+  width  = 32,  # document is 16 cm wide             (before 12cm used)
+  height = 12,  # 4/3 width/high ratio is common      (before 8 cm used)
+  units  = "cm",
+  dpi    = 300    # default for good qualityrotein_fam_meta_entrichment_table <- protein_domain_meta_entrichment_table %>% arrange(desc(recall))
+)
+# end of protein domain enrichment analysis ______________________________________________________________________________________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# *************************************************************************************************************************************************
+# *************************************************************************************************************************************************
+# central processing step: IDs are transfered from high confidence tests (12 vs 12; 6 vs 6 replicates) to lower confidence test sets (3 vs 3)
+# that means eventhough e.g. not sig-up in naiveCD4+ subsets any ID from panT meta subsets transfered to that subsets (ID expansion following confidence gradient)
+# based on enhanced statistical power panT t-test (12 replicated and at least 9/12 replicate IDs required for imputation) is more credible than 3vs3 replicate tests from individual subsets
+# --> use panT sig-enriched proteins as core abTCR community --> expand (copy) IDs into all subsets. same for other meta IDs. distributed to downstream of 
+# *************************************************************************************************************************************************
+# *************************************************************************************************************************************************
+
+# # extend dataset subsets - unique(CD8 is panT + CD8)
+# df_list <- list(
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "CD4+", "Naive CD4+" ))   %>%    mutate(plot_heading_ssEXT = "Naive CD4+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "CD8+", "Naive CD8+" ))   %>%    mutate(plot_heading_ssEXT = "Naive CD8+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "CD4+", "Memory CD4+"))   %>%    mutate(plot_heading_ssEXT = "Memory CD4+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "CD8+", "Memory CD8+"))   %>%    mutate(plot_heading_ssEXT = "Memory CD8+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Naive" , "Naive CD4+" , "Naive CD8+" ))   %>%    mutate(plot_heading_ssEXT = "Naive"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "Memory", "Memory CD4+", "Memory CD8+"))   %>%    mutate(plot_heading_ssEXT = "Memory"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "CD4+"  , "Naive CD4+" , "Memory CD4+"))   %>%    mutate(plot_heading_ssEXT = "CD4+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT", "CD8+"  , "Naive CD8+" , "Memory CD8+"))   %>%    mutate(plot_heading_ssEXT = "CD8+"),
+#   v31_LUX_data_prot_diff_abundance_sigup_upsp %>%    filter(plot_heading %in% c("panT"                                 ))   %>%    mutate(plot_heading_ssEXT = "panT")
+# )
+# v31_LUX_data_prot_diff_abundance_sigup_ssEXTENDED <- bind_rows(df_list) %>%  distinct() %>%
+#   left_join(proteome_20250804 %>% dplyr::select(entry, entry_name, involvement_in_disease, domain_cc, domain_ft, topological_domain, protein_families),  by = "entry") 
+# 
+
 
 ###############################################################################################################################################
 # CYTOSCAPE -----------------------------------------------------------------------------------------------------------------------------------
@@ -1399,7 +2085,7 @@ GO_descendants_df <- go_children_table_generator2(my_terms = c("GO:0036398", "GO
                                          "GO:0007165", "GO:0004672", "GO:0004721", "GO:0004930", "GO:0003823", "GO:0042611", "GO:0019838", "GO:0004896",
                                          "GO:0006955", "GO:0007155", "GO:0005178", "GO:0005215", "GO:0005216", "GO:0016787", "GO:0016491", "GO:0006915",
                                          "GO:0045454", "GO:0031295", "GO:0140359", "GO:0023052", "GO:0035591", "GO:0097197", "GO:0002684", "GO:0002683", 
-                                         "GO:0007166"
+                                         "GO:0007166", "GO:0015031", "GO:0006897"
                                          ), only_new = TRUE) # define whether only new terms should be searched and appended to df. otherwise full serach - which takes long
 ## load resources ...........
 GO_descendants_df     <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/GO_term_children/GO_term_children.csv", header = TRUE , check.names = FALSE)
@@ -1488,6 +2174,44 @@ string_AB_full_700 <- rba_string_interaction_partners(
   dplyr::mutate(entry = coalesce(entry_ENS, entry_primgenename), 
                 match = entry_ENS == entry_primgenename) %>% # QC column showing issues of conflicting mappings (so for none found)
   pull(entry) %>% unique()
+
+#######################
+# helper vecotrs to define unique sets 
+meta_all_but_naive_list    <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT",               "Meta Memory", "Meta CD4+", "Meta CD8+")) %>% pull(entry) %>% unique()
+meta_all_but_memory_list   <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT", "Meta Naive",                "Meta CD4+", "Meta CD8+")) %>% pull(entry) %>% unique()
+meta_all_but_CD4_list      <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory",              "Meta CD8+")) %>% pull(entry) %>% unique()
+meta_all_but_CD8_list      <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+"             )) %>% pull(entry) %>% unique()
+#
+meta_all_but_nCD4_list   <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+",               "Memory CD4+", "Naive CD8+",  "Memory CD8+")) %>% pull(entry) %>% unique()
+meta_all_but_nnCD4_list  <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+", "Naive CD4+",                "Naive CD8+",  "Memory CD8+")) %>% pull(entry) %>% unique()
+meta_all_but_nCD8_list   <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+", "Naive CD4+", "Memory CD4+"              ,  "Memory CD8+")) %>% pull(entry) %>% unique()
+meta_all_but_nnCD8_list  <-  v31_LUX_data_prot_diff_abundance_sigup   %>% filter(plot_heading %in% c("Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+", "Naive CD4+", "Memory CD4+", "Naive CD8+"                )) %>% pull(entry) %>% unique()
+
+# network will be restricted to selected "nice to explain" categroies (weird overlaps ignored or introduced later lets see)
+cytoscape_bait_network  <- v31_LUX_data_prot_diff_abundance_sigup %>%
+  mutate(bait = case_when(
+    # panT master core overlap list
+    plot_heading == "Meta panT" ~ "panT",
+    # meta subsets - !!!!! not ideal approach when there are conflicting informations. but there is no way to prioritize based on biological relevance so just use fixed order ... !!!!!
+    plot_heading == "Meta Naive"  & !(entry %in% meta_all_but_naive_list)  ~ "Naive",   # 
+    plot_heading == "Meta Memory" & !(entry %in% meta_all_but_memory_list) ~ "Memory",
+    plot_heading == "Meta CD4+"   & !(entry %in% meta_all_but_CD4_list)    ~ "CD4+",
+    plot_heading == "Meta CD8+"   & !(entry %in% meta_all_but_CD8_list)    ~ "CD8+",
+    # subset unique
+    plot_heading == "Naive CD4+"  & !(entry %in% meta_all_but_nCD4_list )  ~ "Naive CD4+",  # exclude any proteins from unique-to-subset assignment that are also contained in any of meta categories
+    plot_heading == "Memory CD4+" & !(entry %in% meta_all_but_nnCD4_list)  ~ "Memory CD4+",
+    plot_heading == "Naive CD8+"  & !(entry %in% meta_all_but_nCD8_list )  ~ "Naive CD8+",
+    plot_heading == "Memory CD8+" & !(entry %in% meta_all_but_nnCD8_list)  ~ "Memory CD8+",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(!is.na(bait)) %>%   # eliminate any unassigned proteins
+  dplyr::select(entry, entry_name, bait) %>%
+  distinct() %>%
+  left_join(proteome_upsp_202501 %>% 
+              dplyr::select(entry, gene_names_primary, protein_names), 
+            by = "entry") %>%
+  dplyr::select(bait, gene_names_primary, entry, entry_name, protein_names) %>%
+  dplyr::rename("prey" = "gene_names_primary")
   
 ## mapping resources -------------------------
 cytoscape_info_annotation <- v31_LUX_data_prot_diff_abundance_sigup %>% 
@@ -1562,12 +2286,17 @@ cytoscape_info_annotation_go <- cytoscape_info_annotation  %>%
                 hydrolase_activity       = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`hydrolase activity` %>% na.omit())), "Yes", "No"),
                 oxidoreductase_activity  = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`oxidoreductase activity` %>% na.omit())), "Yes", "No"),
                 apoptotic_process        = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`apoptotic process` %>% na.omit())), "Yes", "No"),
-                redox_homeostasis        = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`cell redox homeostasis` %>% na.omit())), "Yes", "No")
-              ) %>% 
+                redox_homeostasis        = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`cell redox homeostasis` %>% na.omit())), "Yes", "No"),
+                
+                protein_transport        = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$`protein transport`  %>% na.omit())), "Yes", "No"),
+                endocytosis              = if_else(str_split(gene_ontology_i_ds, ";") %>% map_lgl(~ any(str_trim(.)    %in%   GO_descendants_df$endocytosis          %>% na.omit())), "Yes", "No"),
+                
+                ) %>% 
               dplyr::select(-gene_ontology_i_ds) 
 
 cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
   mutate(                
+    CSC_v31_diff_sigUpDown   = case_when(entry %in% unique(v31_CSC_sig_upDown$entry) ~ "Yes", TRUE ~ "No"),
     # protein families / protein name based annotations
     ADP_ribosyl_cyclase      = ifelse(grepl("ADP-ribosyl cyclase family"        , protein_families), "Yes", "No"),       # 2x (of total 2)  --> 100% !!!
     recep_of_compl_actRCQ    = ifelse(grepl("Receptors of complement activation", protein_families), "Yes", "No"),       # 3x (of total 4)  --> 75%
@@ -1597,7 +2326,7 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
                                    tolower(gene_names_primary) %in% unique(c(tolower(APMS_TCR_ppis$Lck_anytime_Romain2019_FC2), tolower(APMS_TCR_ppis$CD3e_allStim_Romain2019_FC2) , tolower(APMS_TCR_ppis$CD3z_allStim_Romain2022_FC2), tolower(APMS_TCR_ppis$ZAP70_allStim_Romain2022_FC2))), "Yes", "No"),
     # poi table based
     CPI_candidate     = ifelse(entry_name %in% c(poi_table %>% dplyr::filter(CPIs != "")  %>% pull(CPIs)), "Yes", "No"),
-    antibodies_bought = ifelse(entry_name %in% c(poi_table %>% dplyr::filter(antibodies_bought != "")  %>% pull(antibodies_bought)), "Yes", "No"),
+    # antibodies_bought = ifelse(entry_name %in% c(poi_table %>% dplyr::filter(antibodies_bought != "")  %>% pull(antibodies_bought)), "Yes", "No"),
     # GO based annotations
     abTCR_and_CD3_chains  = ifelse(entry_name %in% abTCR_chains      , "Yes", "No"),
          meta_surfaceome       = ifelse(entry      %in% surface_annotations$cspa_2015surfy_2018tcsa_2021cd_antigen_veneer_proteome_high, "Yes", "No"),
@@ -1633,14 +2362,14 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
              ),
     cytoscape_fill = case_when(
              abTCR_and_CD3_chains  == "Yes"         ~ "#1a9850", # top priority to highlight these (uniformly)
-             # ADP_ribosyl_cyclase    recep_of_compl_actRCQ  CD99_family SLAM_famliy  ITA_family
-             ADP_ribosyl_cyclase    == "Yes"                                                     ~ "#b3b3e6",
-             recep_of_compl_actRCQ  == "Yes"                                                     ~ "#cc99ff",
-             CD99_family            == "Yes"                                                     ~ "#ffccff",
-             # SLAM_famliy          == "Yes"                                                     ~ "#b3b3b3",
-             ICAM_family            == "Yes"                                                     ~ "#ff99ce",
-             # ITA_family           == "Yes"                                                     ~ "#b3d9ff",
-             # tetraspanin          == "Yes"                                                     ~ "#c7bee7",
+             # # ADP_ribosyl_cyclase    recep_of_compl_actRCQ  CD99_family SLAM_famliy  ITA_family
+             # ADP_ribosyl_cyclase    == "Yes"                                                     ~ "#b3b3e6",
+             # recep_of_compl_actRCQ  == "Yes"                                                     ~ "#cc99ff",
+             # CD99_family            == "Yes"                                                     ~ "#ffccff",
+             # # SLAM_famliy          == "Yes"                                                     ~ "#b3b3b3",
+             # ICAM_family            == "Yes"                                                     ~ "#ff99ce",
+             # # ITA_family           == "Yes"                                                     ~ "#b3d9ff",
+             # # tetraspanin          == "Yes"                                                     ~ "#c7bee7",
              
              # meta_tcr_signaling  == "Dual Role" | GTPase == "Yes" | ITSM == "Yes" | meta_Tact == "Dual Role"  ~ "#ffe5b4",    # 
              # #
@@ -1651,22 +2380,22 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
              # phosphatase == "Yes" | GEF == "Yes" |  ITIM == "Yes" |
              # ubiquitin_ligase  == "Yes" | ubiquitin_ligase_complex   == "Yes"                           ~ "#ff6961",  
              
-             # meta_tcr_signaling  == "Dual Role"          ~ "#fed976",
-             meta_Tact == "Dual Role"                    ~ "#fed976",    # ffe5b4  # | ITSM == "Yes"
+             meta_tcr_signaling  == "Dual Role"          ~ "#fc8d59",
+             meta_Tact == "Dual Role"                    ~ "#fc8d59",    # ffe5b4  # | ITSM == "Yes"
              #
              tcr_signaling_plus  == "Yes"                                                         ~ "#1a9850",    #  3d73a9   # | tcr_signaling_pathway == "Yes"  
              tcr_signaling_minus == "Yes"                                                         ~ "#d73027",
              
-             t_co_stim  == "Yes" | t_act_plus == "Yes" | ISP_reg_plus == "Yes"                    ~ "#91cf60", # | ITAM == "Yes" 
-             t_act_minus == "Yes" | ISP_reg_minus == "Yes"                                        ~ "#fc8d59", # | ITIM == "Yes"  
+             t_co_stim  == "Yes" | t_act_plus == "Yes" | ISP_reg_plus == "Yes"                    ~ "#1a9850", # | ITAM == "Yes" 
+             tcr_signaling_minus == "Yes" | t_act_minus == "Yes" | ISP_reg_minus == "Yes"                                        ~ "#d73027", # | ITIM == "Yes"  
              
              #
-             ITAM == "Yes"               | ITSM == "Yes"   | ITIM == "Yes"                        ~ "#6699ff", # "#e6e600" , #d2a993
-             GTPase             == "Yes" | GEF == "Yes"    | GAP == "Yes"    | 
-             phosphatase        == "Yes" | kinase == "Yes" |
-             ubiquitin_ligase   == "Yes" | ubiquitin_ligase_complex == "Yes" |
-             cytokine_receptor  == "Yes" | signaling_receptor    == "Yes"    | surfaceome_receptor_sign == "Yes"  ~ "#99ccff", # "#e6e600" , #d2a993 
-             
+             # ITAM == "Yes"               | ITSM == "Yes"   | ITIM == "Yes"                        ~ "#6699ff", # "#e6e600" , #d2a993
+             # GTPase             == "Yes" | GEF == "Yes"    | GAP == "Yes"    | 
+             # phosphatase        == "Yes" | kinase == "Yes" |
+             # ubiquitin_ligase   == "Yes" | ubiquitin_ligase_complex == "Yes" |
+             # cytokine_receptor  == "Yes" | signaling_receptor    == "Yes"    | surfaceome_receptor_sign == "Yes"  ~ "#99ccff", # "#e6e600" , #d2a993 
+             # 
              cytoscape_shape == "VEE"      ~ "#ffffff",  # d2a993
              cytoscape_shape == "TRIANGLE" ~ "#ffffff",  # d5eff6
              cytoscape_shape == "OCTAGON"  ~ "#ffffff",
@@ -1698,8 +2427,8 @@ write.csv(cytoscape_info_annotation_full, "/Users/mgesell/Desktop/currentR/2025-
 #   left_join(xxx, by = "entry")
 # write.csv(xxxx, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/shs2.27_golden-analysis_v2/golden_analysis.csv", row.names = FALSE)
 
-
-
+paste(c("CD3 and TCR chains in datast: ", cytoscape_info_annotation_full %>% dplyr::filter(abTCR_and_CD3_chains  == "Yes") %>% pull(entry_name) %>% unique()))
+length(cytoscape_info_annotation_full %>% dplyr::filter(abTCR_and_CD3_chains  == "Yes") %>% pull(entry_name) %>% unique())
 
 
 library(RCy3)
@@ -1724,7 +2453,7 @@ loadTableData(
   table = "node",                  # Load into node table
   table.key.column = "entry"       # Corresponding key column in Cytoscape node table (usually "name")
 )
-# clone the netwokr
+# clone the network
 cloneNetwork()
 
 cytoscape_info_annotation_full %>% 
@@ -1735,7 +2464,6 @@ cytoscape_info_annotation_full %>%
     names_to = "annotation_type",
     values_to = "annotation_value"
   )
-
 
 # manually add nodes: 
 # panT_extended_nodes <- cytoscape_info_annotation_full %>% dplyr::filter(bait == "panT_extended") %>% pull(gene_names_primary) %>% unique()
@@ -1748,10 +2476,10 @@ c("APMS_combined_zero","APMS_combined_anytime", "immune_disease", "abTCR_complex
   "receptor_internalization", "receptor_recycling", "gpcr", "growth_factor_binding",
   "cell_adhesion", "integrin_binding", "hydrolase_activity", "oxidoreductase_activity",
   "apoptotic_process", "ITxM", "CPI_candidate", "antibodies_bought",
-  "meta_surfaceome",
+  "meta_surfaceome", "protein_transport", "endocytosis", 
   "APMS_combined_NS", "APMS_combined_NS_CD3" ,"APMS_combined_meta", "APMS_CD3z_FC2", "APMS_CD3e_FC2", "APMS_ZAP70_FC2", "APMS_Lck", "APMS_FC2_overlap")
 
-cytoscape_column_yellow <- "APMS_combined_NS"  # alternative
+cytoscape_column_yellow <- "CSC_v31_diff_sigUpDown"  # alternative
 table(cytoscape_info_annotation_full[[cytoscape_column_yellow]] )
 cytoscape_info_annotation_full_qid <- cytoscape_info_annotation_full %>%
   mutate(cytoscape_fill = case_when(cytoscape_info_annotation_full[[cytoscape_column_yellow]] == "Yes" ~ "#ffff00", TRUE ~ "#bfbfbf"),
@@ -1857,10 +2585,6 @@ setEdgeLineWidthMapping(
 #                     # mapping.type        = "p",  # 'd' for discrete
 #                     style.name          = "potato")#, identifier_values, shape_values)
 
-
- 
-
-
 # cytoscape_bait_network annotation of supporting data
 
 cytoscape_bait_network <- cytoscape_bait_network %>%
@@ -1872,6 +2596,76 @@ cytoscape_bait_network <- cytoscape_bait_network %>%
 
 
 
+########################################################################################################
+########################################################################################################
+########################################################################################################
+########################################################################################################
+########################################################################################################
+##### which proteins are unique to human (missing in mice/mouse) --> priority for research
+library(biomaRt)
+# Connect to human and mouse Ensembl datasets
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+gene_list = unique(v31_LUX_data_prot_diff_abundance_sigup %>% 
+                     left_join(proteome_upsp_202501 %>% dplyr::select(entry, gene_names_primary), by = "entry") %>%
+                     dplyr::filter(!is.na(gene_names_primary)) %>% 
+                     pull(gene_names_primary) ) 
+split_genes <- split(gene_list, ceiling(seq_along(gene_list)/99))
+
+for (gset in split_genes) {
+  tryCatch({
+    result <- getLDS(
+      attributes  = c("hgnc_symbol", "ensembl_gene_id", "uniprot_gn_id"),
+      filters     = "hgnc_symbol",
+      values      = gset,
+      mart        = human,
+      attributesL = c("mgi_symbol", "ensembl_gene_id", "uniprot_gn_id"),
+      martL       = mouse
+    )
+    # combine results here
+  }, error = function(e) print(e))
+}
+
+### extraction of POIs
+################
+LUX_diff_xx_table <- v31_LUX_data_prot_diff_abundance_sigup %>%
+  dplyr::select(entry, entry_name, plot_heading) %>%
+  left_join(proteome_20250804 %>% dplyr::select(entry, gene_names) , by = "entry") %>%
+  mutate(marker = "+") %>%
+  pivot_wider(id_cols     = c(entry, entry_name, gene_names), 
+              names_from  = plot_heading, 
+              values_from = marker, 
+              values_fill = "."  ) %>%
+  dplyr::select("entry", "entry_name", "gene_names", "Meta panT", "Meta Naive", "Meta Memory", "Meta CD4+", "Meta CD8+" , 
+                "Naive CD4+", "Memory CD4+",  "Naive CD8+" , "Memory CD8+") %>%
+  unite("summary", 4:12, sep = "", remove = FALSE) %>%
+  arrange(summary) 
+
+CPI_table <- LUX_diff_xx_table %>%
+  dplyr::filter(entry_name %in% poi_table$CPIs) 
+write.csv(CPI_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/LUX_CPI_table.csv")
+APMS_table <- LUX_diff_xx_table %>%
+  dplyr::filter(entry_name %in% c(cytoscape_info_annotation_full %>% dplyr::filter(APMS_combined_NS == "Yes") %>% pull(entry_name))) 
+write.csv(APMS_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/LUX_APMS-NS_table.csv")
+
+# IgV domain table
+domain_IgV_entry <- proteome_domain %>% dplyr::filter(str_detect(domains, "Ig-like V-type")) %>% pull(entry)
+length(domain_IgV_entry)
+IgV_table <- LUX_diff_xx_table %>%
+  dplyr::filter(entry %in% domain_IgV_entry) #%>% # to extract CPI overlap
+# dplyr::filter(entry_name %in% poi_table$CPIs) # to extract CPI overlap
+write.csv(IgV_table,  "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/LUX_IgV_table.csv")
+# IgC1 domain table
+domain_IgC1_entry <- proteome_domain %>% dplyr::filter(str_detect(domains, "Ig-like C1-type")) %>% pull(entry)
+length(domain_IgC1_entry)
+IgC1_table <- LUX_diff_xx_table %>%
+  dplyr::filter(entry %in% domain_IgC1_entry) 
+write.csv(IgC1_table, "/Users/mgesell/Desktop/currentR/2025-01__local_reanalysis_paper_candi_experiements/thesis_figures/Chapter_3_R/LUX_IgC1_table.csv")
+
+
+
+
+###############
 
 
 
@@ -1880,7 +2674,11 @@ cytoscape_bait_network <- cytoscape_bait_network %>%
 
 
 
-#
+
+
+
+
+
 
 
 
