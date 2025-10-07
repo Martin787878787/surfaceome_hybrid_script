@@ -129,18 +129,26 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, max_p_valu
   if (is.null(fill_var)) {  # if there is no p_value or other continuous column to define color gradient
     plot <- ggplot(data_ordered, aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var), stroke = border_width), shape = 21, color = "darkgrey", fill = "black") +
-      scale_size(range = c(0, 10), limits = c(min_bubble_size, 1)) +
+      scale_size(
+        range  = c(0, 10),
+        limits = c(0, 1.00), # Always use full range
+        breaks = c(0, 0.25, 0.5, 0.75, 1.00) # Fine-tune tick marks if desired
+      ) +  
       labs(x = "", y = "Term", size = "Recall", title = title_var) +   # Condition
       theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), 
             panel.grid.minor = element_line(color = "grey", linetype = "dotted")    ,
-            axis.text.x = element_text(angle = 20, hjust = 1)  ) +
+            axis.text.x = element_text(angle = 30, hjust = 1)  ) +
       plot_theme()
-
+    
   } else {                  # p_value or other continuous column defines color gradient
     plot <-  ggplot(data_ordered,
                     aes(x = !!sym(x_var), y = !!sym(y_var))) +
       geom_point(aes(size = !!sym(size_var), fill = !!sym(fill_var), stroke = border_width), shape = 21, color = "black") +
-      scale_size(range = c(0, 10), limits = c(min_bubble_size, 1)) +
+      scale_size(
+        range  = c(0, 10),
+        limits = c(0, 1.00), # Always use full range
+        breaks = c(0, 0.25, 0.5, 0.75, 1.00) # Fine-tune tick marks if desired
+      ) +  
       plot_theme()+
       scale_fill_gradient(low = "firebrick", high = "#fee0d2",
                           limits = c(0, max_p_value),       # Set consistent bounds (0 to 0.05)
@@ -150,7 +158,7 @@ plot_dual_distance_bubble <- function(data, group_filter, min_recall, max_p_valu
       labs(x = "", y = "Term", size = "Recall", title = title_var) +   # Condition
       theme(panel.grid.major = element_line(color = "darkgrey", linetype = "dotted"), 
             panel.grid.minor = element_line(color = "grey", linetype = "dotted")    ,
-            axis.text.x = element_text(angle = 20, hjust = 1)  ) 
+            axis.text.x = element_text(angle = 30, hjust = 1)  ) 
 
   }
 
