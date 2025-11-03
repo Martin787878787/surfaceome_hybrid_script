@@ -2,7 +2,7 @@
 ## Load libraries ----------------------------------------------------------------------------------------------------------
 rm(list = ls())           # Purge workspace
 set.seed(123)
-script_version = "_1.5" # version stamp on output directory
+script_version = "_1.6" # version stamp on output directory
 # v1.5   enrichment based on confidence gradient IDs (naive CD4+ gets all panT t-test IDs added due to higher confidence)
 # Core data wrangling and manipulation
 library(dplyr)
@@ -84,8 +84,11 @@ paste("Human proteome (upsp 2025-01) comprises", length(unique(proteome_upsp_202
 #
 proteome_20250804 <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/human_upsp_202508.csv", header = TRUE) %>% setNames(gsub("\\.", "_", tolower(names(.)))) %>% setNames(gsub("__", "_", names(.))) %>% setNames(gsub("_$", "",  names(.)))
 #
-poi_table       <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/POI_lists/POI_lists.csv", header = TRUE)
+poi_table       <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/POI_lists/POI_lists.csv", header = TRUE) 
 
+mouse_proteome_20251024 <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/mouse_upsp_2025_10_24.csv", header = TRUE)         %>% setNames(gsub("\\.", "_", tolower(names(.)))) %>% setNames(gsub("__", "_", names(.))) %>% setNames(gsub("_$", "",  names(.)))
+
+genes_human_20251024 <- read.csv("/Users/mgesell/Desktop/currentR/git/shs_resources/human_genes_2025_10_24.csv", header = TRUE)         %>% setNames(gsub("\\.", "_", tolower(names(.)))) %>% setNames(gsub("__", "_", names(.))) %>% setNames(gsub("_$", "",  names(.)))
 
 # CHAPTER 2 ~~~~~~~~~~ ----
 # ........................................................................................................................
@@ -1627,6 +1630,53 @@ message(length(unique(v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_hea
 message(length(unique(v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Naive CD4+", "Naive CD8+", "Memory CD4+", "Memory CD8+"))           %>% pull(entry) )), " unique sig-enriched proteins in the 4 pT subsets"  )
 message(length(unique(v31_LUX_data_prot_diff_abundance_sigup$entry)), " unique sig-enriched proteins accros all comparisons")
 
+
+
+# which proteins not in mice detectable
+primate_check <- v31_LUX_data_prot_diff_abundance_sigup %>% 
+  left_join(genes_human_20251024 %>% dplyr::select(entry, gene_names_primary),by = "entry") %>%
+  dplyr::select(entry, entry_name, gene_names_primary) %>%
+  filter(!is.na(entry_name) & entry_name != "") %>%
+  mutate(entry_name_noSpec = gsub("_HUMAN", "", entry_name)) %>%
+  distinct() %>%
+  left_join(mouse_proteome_20251024 %>% 
+              dplyr::select(entry, entry_name, gene_names_primary) %>% 
+              distinct()%>%
+              mutate(entry_name_noSpec = gsub("_MOUSE", "", entry_name)),
+            by = "entry_name_noSpec")
+##
+primate_check_human_only <- primate_check %>%
+  filter(is.na(entry_name.y))
+
+primate_check_human_only_TCR <- primate_check_human_only %>%
+  filter(entry_name.x %in% abTCR_chains)
+
+primate_check_human_only_nonTCR_nonHLA <- primate_check_human_only %>%
+  filter(!entry_name.x %in% c(abTCR_chains, "LYSC_LYSEN")) %>%
+  filter(!grepl("HLA", gene_names_primary.x))
+## for cytoscape annotation
+human_only_entries <- unique(primate_check_human_only_nonTCR_nonHLA$entry.x)
+length(human_only_entries)
+## check overrepresentation of no-matching proteins in LUX vs whole proteome
+primate_check_whole_upsp <- genes_human_20251024 %>% dplyr::select(entry, entry_name, gene_names_primary) %>%
+  dplyr::select(entry, entry_name, gene_names_primary) %>%
+  filter(!is.na(entry_name) & entry_name != "") %>%
+  mutate(entry_name_noSpec = gsub("_HUMAN", "", entry_name)) %>%
+  distinct() %>%
+  left_join(mouse_proteome_20251024 %>% 
+              dplyr::select(entry, entry_name, gene_names_primary) %>% 
+              distinct()%>%
+              mutate(entry_name_noSpec = gsub("_MOUSE", "", entry_name)),
+            by = "entry_name_noSpec")
+
+primate_check_human_only_full_upsp <- primate_check_whole_upsp %>%
+  filter(is.na(entry_name.y))
+
+length(human_only_entries)/length(unique(v31_LUX_data_prot_diff_abundance_sigup$entry))
+length(unique(primate_check_human_only_full_upsp$entry.x))/length(unique(genes_human_20251024$entry))
+
+
+
 ### ......................................................................................................................
 ##  v31 LUX volcano ----
 # core known TCR community
@@ -2229,6 +2279,8 @@ string_AB_full_700 <- rba_string_interaction_partners(
                 match = entry_ENS == entry_primgenename) %>% # QC column showing issues of conflicting mappings (so for none found)
   pull(entry) %>% unique()
 
+AK_IS_T <- c("ITB2_HUMAN", "VTNC_HUMAN", "CD44_HUMAN", "LV746_HUMAN", "LFA3_HUMAN", "CD48_HUMAN", "CD6_HUMAN", "CD7_HUMAN", "TVB27_HUMAN", "SIT1_HUMAN", "CD5_HUMAN", "BT3A2_HUMAN", "BASI_HUMAN", "TRBC1_HUMAN", "ITA5_HUMAN", "HV169_HUMAN", "4F2_HUMAN", "CA2D2_HUMAN", "BGH3_HUMAN", "HLAC_HUMAN", "PLMN_HUMAN", "KVD29_HUMAN", "SEM4D_HUMAN", "ITB7_HUMAN", "TRBR2_HUMAN", "HLAB_HUMAN", "AT1B3_HUMAN", "MCP_HUMAN", "TNR6_HUMAN", "BT3A3_HUMAN", "B2MG_HUMAN", "EMB_HUMAN", "HLAA_HUMAN", "PTPRC_HUMAN", "ITA4_HUMAN", "LEUK_HUMAN", "PRIO_HUMAN", "HBA_HUMAN", "LIGO2_HUMAN", "LAIR1_HUMAN", "IGKC_HUMAN", "IGSF2_HUMAN", "IFM1_HUMAN", "NKG2D_HUMAN", "HBB_HUMAN", "CD27_HUMAN", "ITB1_HUMAN", "ICAM2_HUMAN", "DRB5_HUMAN", "CD99_HUMAN", "CD2_HUMAN", "ITAL_HUMAN", "F13B_HUMAN", "DRB1_HUMAN", "PECA1_HUMAN", "SIRPG_HUMAN", "APOE_HUMAN", "CD59_HUMAN", "ICAM3_HUMAN", "HABP2_HUMAN", "ICOS_HUMAN", "TSP1_HUMAN", "CD226_HUMAN", "FETUA_HUMAN", "FBN1_HUMAN", "TRAC_HUMAN", "CO4A2_HUMAN", "AGRE5_HUMAN", "ZPI_HUMAN", "KRT34_HUMAN", "TVB19_HUMAN", "LYAM1_HUMAN", "IGHG1_HUMAN", "HLAF_HUMAN", "EVI2B_HUMAN", "SIGIR_HUMAN", "AK1BA_HUMAN", "PTCA_HUMAN", "K2C3_HUMAN")
+
 #######################.
 # helper vecotrs to define unique sets 
 meta_all_but_naive_list    <-  v31_LUX_data_prot_diff_abundance_sigup %>% filter(plot_heading %in% c("Meta panT",               "Meta Memory", "Meta CD4+", "Meta CD8+")) %>% pull(entry) %>% unique()
@@ -2394,6 +2446,12 @@ cytoscape_info_annotation_full <- cytoscape_info_annotation_go %>%
     CSC_v31_diff_sigUpDown   = case_when(entry %in% unique(v31_CSC_sig_upDown$entry)   ~ "Yes", TRUE ~ "No"),
     CSC_v31_detected         = case_when(entry %in% unique(v31_CSC_prot$entry)         ~ "Yes", TRUE ~ "No"),
     CSC_panT_detectable      = case_when(entry %in% unique(CSC_surfaceome_panT$entry)  ~ "Yes", TRUE ~ "No"), 
+    #
+    AK_IS_T                  = case_when(entry_name %in% AK_IS_T                       ~ "Yes", TRUE ~ "No"), 
+    human_only_entries       = case_when(entry %in% human_only_entries                 ~ "Yes", TRUE ~ "No"), 
+    Shilts2022_binding_block =  case_when(entry_name %in% poi_table$BindingBlockListPharmacoscopy_shilts2022_fig4d ~ "Yes", TRUE ~ "No"), 
+    CPIs =  case_when(entry_name %in% poi_table$CPIs ~ "Yes", TRUE ~ "No"), 
+    #
     # protein families / protein name based annotations
     ADP_ribosyl_cyclase      = ifelse(grepl("ADP-ribosyl cyclase family"        , protein_families), "Yes", "No"),       # 2x (of total 2)  --> 100% !!!
     recep_of_compl_actRCQ    = ifelse(grepl("Receptors of complement activation", protein_families), "Yes", "No"),       # 3x (of total 4)  --> 75%
@@ -2793,6 +2851,7 @@ c("CSC_v31_diff_sigUpDown", "CSC_v31_detected",
   "tolerance_induction",              "leukocyte_cyototox" ,
   "drug_target", "immune_disease",
   "gpcr_signaling",
+  "AK_IS_T", "human_only_entries", "Shilts2022_binding_block", "CPIs"
   
   "immune_disease", "abTCR_complex", "tcr_signalosome", "receptor_clustering",
   "receptor_internalization", "receptor_recycling", "gpcr", "growth_factor_binding",
@@ -2801,8 +2860,8 @@ c("CSC_v31_diff_sigUpDown", "CSC_v31_detected",
   "meta_surfaceome", "protein_transport", "endocytosis", 
    "APMS_combined_NS_CD3" , "APMS_CD3z_FC2", "APMS_CD3e_FC2", "APMS_ZAP70_FC2", "APMS_Lck", "APMS_FC2_overlap")
 
-cytoscape_column_1 <- "CSC_v31_diff_sigUpDown"  # alternative
-cytoscape_column_2 <- "CSC_panT_detectable"
+cytoscape_column_1 <- "CPIs"  # alternative
+cytoscape_column_2 <- ""
 table(cytoscape_info_annotation_full[[cytoscape_column_1]] )
 cytoscape_info_annotation_full_qid <- cytoscape_info_annotation_full %>%
   mutate(cytoscape_fill = case_when(cytoscape_info_annotation_full[[cytoscape_column_1]] == "Yes" ~ "#ffff00",    TRUE ~ "#bfbfbf"),  #   #80bfff
@@ -2821,6 +2880,8 @@ loadTableData(
   table = "node",                  # Load into node table
   table.key.column = "entry"       # Corresponding key column in Cytoscape node table (usually "name")
 )
+
+table(cytoscape_info_annotation_full[[cytoscape_column_1]])
 
 ## ..........................................................................................................................................................
 ### CP ppi mapping ----
